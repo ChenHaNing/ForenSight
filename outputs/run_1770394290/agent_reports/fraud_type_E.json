@@ -1,0 +1,52 @@
+{
+  "risk_level": "中等",
+  "risk_points": [
+    "存在历史内控缺陷的间接证据，但具体性质、重要性和当前有效性信息缺失",
+    "关联方交易披露有限，无法评估其规模、性质及潜在资金占用风险"
+  ],
+  "evidence": [
+    "输入内容指出：'作为大型加速申报公司，已更正前期报表错误，表明存在历史内控缺陷'",
+    "输入内容指出：'关联方交易披露有限'",
+    "外部检索摘要中未发现关于前期报表错误更正的具体细节、性质或重要性说明",
+    "外部检索摘要中未发现关联方交易的详细披露信息",
+    "2025年10-K文件包含CEO和CFO的SOX 906条款合规认证，表明当前报表的合规性"
+  ],
+  "reasoning_summary": "基于输入内容和外部检索，存在两个主要关注点：1) 历史内控缺陷的间接指认，但缺乏具体证据（如更正的性质、金额、影响期间、根本原因及补救措施），无法评估其严重性或当前内控有效性；2) 关联方交易披露有限，无法判断是否存在异常资金往来或未披露的关联方关系。然而，2025年10-K文件包含管理层对财务报告内控有效性的认证，这提供了当前期的正面证据。由于关键细节缺失，无法做出低风险或高风险的明确判断，但这两个特征协同存在，值得进一步核查。",
+  "suggestions": [
+    "核查公司过往的8-K或10-K/A文件，获取关于前期报表错误更正的具体公告，包括错误性质、影响的财务报表科目、更正金额、是否为重大错误、以及管理层和审计师对内控缺陷的评价及补救措施。",
+    "详细审阅2025年10-K文件的“关联方交易”附注（Note 1或相关部分），评估披露的充分性。如确实披露有限，需分析其原因（例如，交易金额未达披露门槛，或确实存在披露不充分）。",
+    "结合现金流量表、资产负债表中的“其他应收款”、“其他应付款”等科目，分析是否存在无法合理解释的大额或异常资金往来，作为关联方资金占用的间接线索。",
+    "关注审计报告中关于关联方交易审计的说明段或关键审计事项（如适用）。"
+  ],
+  "confidence": 0.7,
+  "_external_search": [
+    {
+      "url": "https://www.stocktitan.net/sec-filings/AAPL/8-k-apple-inc-reports-material-event-ea751473579e.html",
+      "title": "[8-K] Apple Inc. Reports Material Event | AAPL SEC Filing",
+      "content": "Apple Inc. filed a Form 8-K reporting that on **January 29, 2026** it issued a press release announcing its financial results for the **first fiscal quarter ended December 27, 2025**. The filing also includes an Inline XBRL exhibit for the cover page and is signed on Apple’s behalf by **Kevan Parekh, Senior Vice President and Chief Financial Officer**. If an emerging growth company, indicate by check mark if the Registrant has elected not to use the extended transition period for complying with any new or revised financial accounting standards provided pursuant to Section 13(a) of the Exchange Act. Item 2.02    Results of Operations and Financial Condition. Pursuant to the requirements of the Securities Exchange Act of 1934, the Registrant has duly caused this report to be signed on its behalf by the undersigned hereunto duly authorized. ### AAPL Latest SEC Filings. [[10-Q] Apple Inc. Quarterly Earnings Report](/sec-filings/AAPL/10-q-apple-inc-quarterly-earnings-report-d498ae47d743.html). [[PX14A6G] Apple Inc. SEC Filing](/sec-filings/AAPL/px14a6g-apple-inc-sec-filing-8998c833fd3d.html). [[DEF 14A] Apple Inc. Definitive Proxy Statement](/sec-filings/AAPL/def-14a-apple-inc-definitive-proxy-statement-eab8265de10d.html). [[Form 4] Apple Inc. Insider Trading Activity](/sec-filings/AAPL/form-4-apple-inc-insider-trading-activity-8e45c502991c.html). [[Form 4] Apple Inc. Insider Trading Activity](/sec-filings/AAPL/form-4-apple-inc-insider-trading-activity-c662b0a9a476.html).",
+      "score": 0.64746445,
+      "raw_content": null
+    },
+    {
+      "url": "https://www.datainsightsmarket.com/companies/AAPL",
+      "title": "Apple Inc. (AAPL) Stock Price, Market Cap, Segmented ...",
+      "content": "**Keywords:** Apple, Q1 FY25, Earnings Call, Revenue, Profit, EPS, iPhone, Mac, iPad, Services, Apple Intelligence, AI, Emerging Markets, China, Gross Margin, Capital Return, Outlook, Guidance. The Q&A session focused on key areas like the impact of Apple Intelligence, performance in China, gross margin drivers, and the sustainability of growth in product categories. + **Response:** Tim Cook stated that the strength of the product lineup, particularly the **iPhone 16 family's double-digit YoY growth compared to the iPhone 15 family**, was the primary driver for the record upgrade rates in iPhone and Mac. The performance of Apple Silicon was also highlighted as a key factor for Mac upgrades. + **Strong Product Performance:** Double-digit growth in iPhone and Mac highlights the continued appeal and innovation of Apple's hardware. + The **record revenue for the September quarter and strong year-over-year growth** across key segments indicate resilience and continued demand for Apple's products and services.",
+      "score": 0.6172364,
+      "raw_content": null
+    },
+    {
+      "url": "https://s2.q4cdn.com/470004039/files/doc_financials/2025/ar/_10-K-2025-As-Filed.pdf",
+      "title": "2025 10-K Filing - Apple Inc.",
+      "content": "Cook, certify, as of the date hereof, pursuant to 18 U.S.C. Section 1350, as adopted pursuant to Section 906 of the Sarbanes-Oxley Act of 2002, that the Annual Report of Apple Inc. on Form 10-K for the fiscal year ended September 27, 2025 fully complies with the requirements of Section 13(a) or 15(d) of the Securities Exchange Act of 1934 and that information contained in such Form 10-K fairly presents in all material respects the financial condition and results of operations of Apple Inc. at the dates and for the periods indicated. Cook Chief Executive Officer I, Kevan Parekh, certify, as of the date hereof, pursuant to 18 U.S.C. Section 1350, as adopted pursuant to Section 906 of the Sarbanes-Oxley Act of 2002, that the Annual Report of Apple Inc. on Form 10-K for the fiscal year ended September 27, 2025 fully complies with the requirements of Section 13(a) or 15(d) of the Securities Exchange Act of 1934 and that information contained in such Form 10-K fairly presents in all material respects the financial condition and results of operations of Apple Inc. at the dates and for the periods indicated.",
+      "score": 0.6122407,
+      "raw_content": null
+    },
+    {
+      "url": "https://investor.apple.com/investor-relations/default.aspx",
+      "title": "Investor Relations - Apple",
+      "content": "2026 Annual Meeting of Shareholders. Apple will host the 2026 Annual Meeting of Shareholders on February 24, 2026 at 8:00 am P.T. in a virtual format.",
+      "score": 0.38428864,
+      "raw_content": null
+    }
+  ]
+}

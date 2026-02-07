@@ -1,0 +1,68 @@
+{
+  "risk_level": "低",
+  "risk_points": [
+    "收入确认政策涉及服务递延价值的摊销，且存在大额递延收入，需关注其确认时点与释放节奏的合理性。",
+    "大中华区iPhone收入占比相对其他地区偏高，需审视是否存在渠道库存积压或收入确认的异常压力。",
+    "金融资产公允价值计量（特别是Level 2工具）依赖模型和可观察市场数据，在利率或市场波动下估值存在不确定性。",
+    "流动比率与速动比率小于1，表明短期流动性对经营现金流和外部融资的持续性依赖较强。",
+    "公司曾更正前期财务报表错误，表明历史上存在内控缺陷，需评估当前内控的有效性。"
+  ],
+  "evidence": [
+    "证据：'Services net sales include amortization of the deferred value of services bundled in the sales price of certain products.' (来源：收入/分部信息补充表格脚注(1))",
+    "证据：'As of September 27, 2025, the Company had total deferred revenue of $13.7 billion... expects 66% of total deferred revenue to be realized in less than a year' (来源：收入/分部信息补充段落)",
+    "证据：'except in Greater China, where iPhone revenue represented a moderately higher proportion of net sales.' (来源：收入/分部信息补充段落)",
+    "证据：'The valuation techniques used to measure the fair values of the Company’s Level 2 financial instruments... are based on quoted market prices or model-driven valuations using significant inputs derived from or corroborated by observable market data.' (来源：Note 4 – Financial Instruments 脚注(1))",
+    "证据：财务指标显示流动比率为0.893，速动比率为0.859，现金比率为0.217。 (来源：输入内容 financial_metrics.liquidity)",
+    "证据：'报告确认公司为在纳斯达克上市的大型加速申报公司，已对先前财务报表中的错误进行了更正。' (来源：文本内容 major_events)",
+    "证据：'The Company’s proportion of net sales by disaggregated revenue source was generally consistent for each reportable segment...' (来源：收入/分部信息补充段落)",
+    "证据：2025财年总营收同比增长6.4%，服务收入同比增长13.5%，毛利率为46.9%，净利率为26.9%。 (来源：输入内容 financial_summary)",
+    "证据：外部检索显示2026财年第一季度营收同比增长15.65%，公司预计持续增长。 (来源：输入内容 external_search_summary)",
+    "证据：行业基准显示苹果毛利率（46.2%）远高于行业中位数（28.30%）。 (来源：输入内容 industry_benchmark_summary)"
+  ],
+  "reasoning_summary": "基于提供的证据，苹果公司整体财务表现强劲，盈利能力和现金流生成能力卓越，主要风险点处于可控或需关注状态，未发现系统性高风险证据。具体分析：1. 收入确认与递延收入：虽有复杂摊销政策和大额递延收入，但公司披露了明确的实现计划（66%在一年内），且服务收入增长健康，未发现激进确认的直接证据。大中华区iPhone占比偏高有明确披露，但公司同时指出各报告分部收入构成总体一致，需结合渠道数据进一步核查，单点异常不足以构成高风险。2. 资产估值：金融工具公允价值计量方法已披露，依赖模型是行业常见做法，风险在于市场波动，但公司体量和财务弹性可缓冲此类影响。3. 流动性：流动比率小于1在大型科技公司中常见，因其拥有强大的经营现金流（证据显示盈利指标强劲）和良好的资本市场融资渠道，短期偿债风险低。4. 内控缺陷：历史错误更正需关注，但公司作为大型加速申报公司，遵循严格披露要求，且当前报告已获CEO和CFO的SOX 906条款认证，表明管理层对当前报表公允性承担责任。5. 特征协同性：高盈利、强现金流、持续的收入增长与服务转型、领先的市场地位共同构成了强大的财务基础，抵消了上述单点关注事项的潜在影响。",
+  "suggestions": [
+    "建议进一步核查大中华区渠道库存水平与销售终端数据，以确认iPhone收入占比升高的具体原因及可持续性。",
+    "建议审阅递延收入明细、摊销政策及与实际服务提供进度的匹配性，以评估收入确认的稳健性。",
+    "建议评估在利率上升或市场下行情景下，Level 2金融资产公允价值可能面临的减值风险及其对财务报表的影响。",
+    "建议分析经营性现金流的详细构成与稳定性，以确认其支撑短期流动性的能力。",
+    "建议了解前期报表错误更正的具体性质、原因及已采取的补救内控措施，以评估内控缺陷是否已彻底解决。"
+  ],
+  "confidence": 0.85,
+  "_external_search": [
+    {
+      "url": "https://www.stockinsights.ai/us/AAPL/10-K/fy25-a43c",
+      "title": "APPLE INC 10-K Filing FY25",
+      "content": "APPLE INC 10-K Filing FY25. # APPLE INC. - Apple Inc. designs and develops a wide range of products and services, including hardware such as smartphones, personal computers, tablets, and wearables, as well as software solutions, cloud services, and digital content offerings. Apple also provides payment services through products like Apple Card and Apple Pay. - Apple operates in highly competitive global markets characterized by rapid technological advancements and price sensitivity. Key market segments include consumer electronics, cloud services, digital content distribution, payment services, and subscription-based services. - Apple's competitive advantages stem from its significant portfolio of patents and intellectual property, offering a unique integration of hardware and software solutions. - Apple focuses on continuous innovation and the integration of new technologies into its product offerings, backed by significant investments in research and development. - Apple relies on various key suppliers and outsourcing partners for manufacturing and logistics, particularly in regions like China, India, and Taiwan.",
+      "score": 0.67243975,
+      "raw_content": null
+    },
+    {
+      "url": "https://www.apple.com/newsroom/pdfs/fy2025-q2/FY25_Q2_Consolidated_Financial_Statements.pdf",
+      "title": "Consolidated Financial Statements",
+      "content": "Apple Inc. CONDENSED CONSOLIDATED STATEMENTS OF OPERATIONS (Unaudited) (In millions, except number of shares, which are reflected in thousands, and per-share amounts) Three Months Ended Six Months Ended March 29, 2025 March 30, 2024 March 29, 2025 March 30, 2024 Net sales: Products $ 68,714 $ 66,886 $ 166,674 $ 163,344 Services 26,645 23,867 52,985 46,984 Total net sales (1) 95,359 90,753 219,659 210,328 Cost of sales: Products 44,030 42,424 103,477 100,864 Services 6,462 6,058 13,040 12,338 Total cost of sales 50,492 48,482 116,517 113,202 Gross margin 44,867 42,271 103,142 97,126 Operating expenses: Research and development 8,550 7,903 16,818 15,599 Selling, general and administrative 6,728 6,468 13,903 13,254 Total operating expenses 15,278 14,371 30,721 28,853 Operating income 29,589 27,900 72,421 68,273 Other income/(expense), net (279) 158 (527) 108 Income before provision for income taxes 29,310 28,058 71,894 68,381 Provision for income taxes 4,530 4,422 10,784 10,829 Net income $ 24,780 $ 23,636 $ 61,110 $ 57,552 Earnings per share: Basic $ 1.65 $ 1.53 $ 4.06 $ 3.72 Diluted $ 1.65 $ 1.53 $ 4.05 $ 3.71 Shares used in computing earnings per share: Basic 14,994,082 15,405,856 15,037,903 15,457,810 Diluted 15,056,133 15,464,709 15,103,499 15,520,675 (1) Net sales by reportable segment: Americas $ 40,315 $ 37,273 $ 92,963 $ 87,703 Europe 24,454 24,123 58,315 54,520 Greater China 16,002 16,372 34,515 37,191 Japan 7,298 6,262 16,285 14,029 Rest of Asia Pacific 7,290 6,723 17,581 16,885 Total net sales $ 95,359 $ 90,753 $ 219,659 $ 210,328 (1) Net sales by category: iPhone $ 46,841 $ 45,963 $ 115,979 $ 115,665 Mac 7,949 7,451 16,936 15,231 iPad 6,402 5,559 14,490 12,582 Wearables, Home and Accessories 7,522 7,913 19,269 19,866 Services 26,645 23,867 52,985 46,984 Total net sales $ 95,359 $ 90,753 $ 219,659 $ 210,328 Apple Inc. CONDENSED CONSOLIDATED BALANCE SHEETS (Unaudited) (In millions, except number of shares, which are reflected in thousands, and par value) March 29, 2025 September 28, 2024 ASSETS:",
+      "score": 0.6682966,
+      "raw_content": null
+    },
+    {
+      "url": "https://www.stocktitan.net/sec-filings/AAPL/8-k-apple-inc-reports-material-event-ea751473579e.html",
+      "title": "[8-K] Apple Inc. Reports Material Event | AAPL SEC Filing",
+      "content": "Apple Inc. filed a Form 8-K reporting that on **January 29, 2026** it issued a press release announcing its financial results for the **first fiscal quarter ended December 27, 2025**. The filing also includes an Inline XBRL exhibit for the cover page and is signed on Apple’s behalf by **Kevan Parekh, Senior Vice President and Chief Financial Officer**. If an emerging growth company, indicate by check mark if the Registrant has elected not to use the extended transition period for complying with any new or revised financial accounting standards provided pursuant to Section 13(a) of the Exchange Act. Item 2.02    Results of Operations and Financial Condition. Pursuant to the requirements of the Securities Exchange Act of 1934, the Registrant has duly caused this report to be signed on its behalf by the undersigned hereunto duly authorized. ### AAPL Latest SEC Filings. [[10-Q] Apple Inc. Quarterly Earnings Report](/sec-filings/AAPL/10-q-apple-inc-quarterly-earnings-report-d498ae47d743.html). [[PX14A6G] Apple Inc. SEC Filing](/sec-filings/AAPL/px14a6g-apple-inc-sec-filing-8998c833fd3d.html). [[DEF 14A] Apple Inc. Definitive Proxy Statement](/sec-filings/AAPL/def-14a-apple-inc-definitive-proxy-statement-eab8265de10d.html). [[Form 4] Apple Inc. Insider Trading Activity](/sec-filings/AAPL/form-4-apple-inc-insider-trading-activity-8e45c502991c.html). [[Form 4] Apple Inc. Insider Trading Activity](/sec-filings/AAPL/form-4-apple-inc-insider-trading-activity-c662b0a9a476.html).",
+      "score": 0.49084634,
+      "raw_content": null
+    },
+    {
+      "url": "https://s2.q4cdn.com/470004039/files/doc_financials/2025/ar/_10-K-2025-As-Filed.pdf",
+      "title": "2025 10-K - Apple Inc.",
+      "content": "Cook, certify, as of the date hereof, pursuant to 18 U.S.C. Section 1350, as adopted pursuant to Section 906 of the Sarbanes-Oxley Act of 2002, that the Annual Report of Apple Inc. on Form 10-K for the fiscal year ended September 27, 2025 fully complies with the requirements of Section 13(a) or 15(d) of the Securities Exchange Act of 1934 and that information contained in such Form 10-K fairly presents in all material respects the financial condition and results of operations of Apple Inc. at the dates and for the periods indicated. Cook Chief Executive Officer I, Kevan Parekh, certify, as of the date hereof, pursuant to 18 U.S.C. Section 1350, as adopted pursuant to Section 906 of the Sarbanes-Oxley Act of 2002, that the Annual Report of Apple Inc. on Form 10-K for the fiscal year ended September 27, 2025 fully complies with the requirements of Section 13(a) or 15(d) of the Securities Exchange Act of 1934 and that information contained in such Form 10-K fairly presents in all material respects the financial condition and results of operations of Apple Inc. at the dates and for the periods indicated.",
+      "score": 0.46482924,
+      "raw_content": null
+    },
+    {
+      "url": "https://investor.apple.com/investor-relations/default.aspx",
+      "title": "Investor Relations - Apple",
+      "content": "Apple reports first quarter results. January 29, 2026. Apple today announced financial results for its fiscal 2026 first quarter ended December 27, 2025. Read",
+      "score": 0.4420348,
+      "raw_content": null
+    }
+  ]
+}

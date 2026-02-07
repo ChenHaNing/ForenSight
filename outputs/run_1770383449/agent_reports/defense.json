@@ -1,0 +1,21 @@
+{
+  "risk_level": "中等",
+  "risk_points": [
+    "供应链集中风险",
+    "重大法律与监管风险",
+    "市场竞争与收入集中风险"
+  ],
+  "evidence": [
+    "A significant majority of the Company’s manufacturing is performed in whole or in part by outsourcing partners located primarily in China mainland, India, Japan, South Korea, Taiwan and Vietnam...",
+    "On March 21, 2024, the DOJ and a number of state and district attorneys general filed a civil antitrust lawsuit... alleging monopolization or attempted monopolization in the markets for 'performance smartphones' and 'smartphones'...",
+    "The Company is subject to other legal proceedings and claims that have not been fully resolved and that have arisen in the ordinary course of business.",
+    "If the Company is unable to compete successfully, its business, reputation, results of operations, financial condition and stock price can be materially adversely affected."
+  ],
+  "reasoning_summary": "基于年报披露，公司面临的主要风险点有据可查，并非臆测。供应链高度集中于特定地区（证据1）构成业务连续性风险；同时面临美国司法部反垄断诉讼（证据2）及其他未决法律程序（证据3），可能带来重大财务和运营影响；此外，公司在高度竞争的市场中运营，且iPhone收入占比过半，存在市场和产品集中风险（证据4）。这些风险虽被公司识别并披露，但其潜在影响可能对财务表现和股价构成实质性压力。",
+  "suggestions": [
+    "持续监控并评估主要制造地区的地缘政治与贸易政策变化，制定多元化的供应链备选方案。",
+    "密切关注美国司法部反垄断诉讼及其他重大法律程序的进展，评估其对业务模式、合规成本及潜在罚款的影响。",
+    "加强产品创新与服务多元化，以降低对单一产品线（iPhone）的收入依赖，并提升在竞争市场中的韧性。"
+  ],
+  "confidence": 0.85
+}

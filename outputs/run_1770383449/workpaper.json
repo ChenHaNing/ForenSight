@@ -1,0 +1,32 @@
+{
+  "company_profile": "Apple Inc. 是一家全球领先的科技公司，设计、制造和销售智能手机、个人电脑、平板电脑、可穿戴设备和配件，并提供多种相关服务。公司总部位于美国加利福尼亚州库比蒂诺，在全球拥有约166,000名全职等效员工。其业务按地理区域划分为美洲、欧洲、大中华区、日本和亚太其他地区五个报告分部。2025财年，公司总净销售额为4161.61亿美元，其中iPhone收入占比最高（约50.4%）。",
+  "financial_summary": "2025财年，公司总净销售额为4161.61亿美元，同比增长6%。净利润为1120.10亿美元，同比增长19.5%。毛利率为46.9%，同比略有上升。经营活动产生的现金流为1114.82亿美元。截至2025年9月27日，公司拥有现金及现金等价物359.34亿美元，有价证券964.86亿美元，总资产3592.41亿美元，总负债2855.08亿美元，股东权益737.33亿美元。",
+  "risk_disclosures": "公司面临宏观经济风险、地缘政治紧张和贸易争端风险、供应链依赖风险（主要制造外包给位于中国、印度、日本、韩国、台湾和越南的合作伙伴）、激烈市场竞争风险、产品和服务缺陷风险、知识产权依赖风险、法律和监管合规风险（包括反垄断调查、数字市场法案合规、数据隐私等）、网络安全风险以及汇率波动风险等。",
+  "major_events": "1. 欧盟委员会根据《数字市场法案》（DMA）对公司展开调查，并于2025年4月23日因第5(4)条调查对公司处以5亿欧元罚款。公司已提出上诉。2. 美国司法部及多个州于2024年3月21日对公司提起反垄断诉讼，指控其在“性能智能手机”和“智能手机”市场存在垄断行为。3. 公司与Epic Games的诉讼仍在进行中，加州地区法院于2025年4月30日认定公司违反2021年禁令。4. 2025年第二季度起，美国宣布对包括中国、印度、日本、韩国、台湾、越南和欧盟在内的进口商品加征新关税，可能对公司供应链和成本产生影响。",
+  "governance_signals": "公司设有审计与财务委员会，负责监督包括网络安全在内的风险。公司首席信息安全官领导信息安全团队。截至2025财年末，公司董事会由9名董事组成。公司维持了有效的财务报告内部控制（根据Ernst & Young LLP的审计意见）。公司有定期的股票回购和分红计划，2025财年回购股票893亿美元，支付股息及股息等价物154亿美元。",
+  "industry_comparables": "（注：提供的文本主要为Apple Inc.的10-K年报和一篇关于财务舞弊识别系统的学术论文，未包含具体的同行业可比公司财务数据。此处基于年报内容描述其市场地位。）公司在全球智能手机、个人电脑、平板电脑和可穿戴设备市场中占有少数市场份额，面临来自拥有广泛产品线、低价产品和庞大客户基础的竞争对手的激烈竞争。",
+  "fraud_type_A_block": "（注：此字段用于记录系统识别出的具体舞弊风险点。根据提供的学术论文，系统可识别虚构交易类收入舞弊、会计操纵类收入舞弊、净利润类舞弊、净资产类舞弊、资金占用舞弊等。但当前提供的Apple Inc. 10-K年报是真实公司的披露文件，并非系统识别出的舞弊案例。因此，此处基于年报信息，指出其披露的常规风险，而非已识别的舞弊。）公司年报未提示存在已确认的财务舞弊情形。但披露了因会计差错更正而使用更正后数据编制工作底稿的考量，这反映了对潜在未发现风险的关注。",
+  "fraud_type_B_block": "（注：同上，此字段用于记录另一类舞弊风险。基于年报内容，可关注其披露的特定风险。）公司披露其供应商和合同制造商集中在特定地区（如中国），存在供应链中断风险，这可能为虚构交易或成本操纵提供借口或机会。此外，公司面临多项重大法律诉讼和监管调查（如反垄断），这可能构成业绩压力。年报也提及与Google的搜索服务授权安排可能因法院命令而受到影响，构成收入风险。",
+  "evidence": [
+    {
+      "quote": "A significant majority of the Company’s manufacturing is performed in whole or in part by outsourcing partners located primarily in China mainland, India, Japan, South Korea, Taiwan and Vietnam...",
+      "source": "Item 1A. Risk Factors - The Company depends on component and product manufacturing and logistical services provided by outsourcing partners, many of which are located outside of the U.S."
+    },
+    {
+      "quote": "On March 21, 2024, the DOJ and a number of state and district attorneys general filed a civil antitrust lawsuit... alleging monopolization or attempted monopolization in the markets for 'performance smartphones' and 'smartphones'...",
+      "source": "Item 3. Legal Proceedings - Department of Justice Lawsuit"
+    },
+    {
+      "quote": "The Company is subject to other legal proceedings and claims that have not been fully resolved and that have arisen in the ordinary course of business.",
+      "source": "Item 3. Legal Proceedings - Other Legal Proceedings"
+    },
+    {
+      "quote": "If the Company is unable to compete successfully, its business, reputation, results of operations, financial condition and stock price can be materially adversely affected.",
+      "source": "Item 1A. Risk Factors - Global markets for the Company’s products and services are highly competitive..."
+    },
+    {
+      "quote": "From the academic paper: '舞弊识别大模型系统提示的财务舞弊风险仅为初筛排查，能否正式形成财务舞弊线索，仍需监管人员进一步采取发函问询等措施进行验证核实，对于相关公司是否确实存在财务舞弊情形，还需以证券监管机构的检查或调查结果为准。'",
+      "source": "证券市场导报 2026年1月号 - 七、舞弊识别大模型系统建设成效分析 - (二)舞弊识别大模型系统舞弊识别效果实测表现 - 2. 测评结果"
+    }
+  ]
+}

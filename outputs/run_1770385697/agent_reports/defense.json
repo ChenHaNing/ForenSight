@@ -1,0 +1,61 @@
+{
+  "risk_level": "低",
+  "risk_points": [
+    "市场竞争与毛利率压力",
+    "供应链集中与价格波动风险",
+    "关联方交易信息缺失",
+    "外部监管环境趋严"
+  ],
+  "evidence": [
+    "公司披露其业务面临激烈竞争，竞争对手通过‘激进定价和非常低的成本结构，以及模仿公司产品和侵犯其知识产权’进行竞争。",
+    "公司承认‘某些组件目前从单一或有限来源获得’，并且‘许多组件……有时会出现行业性短缺和显著的原材料价格波动’。",
+    "年报中“Item 13. Certain Relationships and Related Transactions, and Director Independence”部分应包含关联方及交易详情，但在此摘录文本中未具体展开。需要查阅完整年报的该部分以获取关联方交易、资金往来等详细信息。",
+    "2025年以来，沪深交易所重大违法退市公司已达13家，创下历史新高。案例显示公司通过虚构业务、虚增收入利润、关联方巨额资金占用等方式实施财务造假。",
+    "做空机构早期发掘做空目标，大致从四个渠道实现：1）从财务报表入手，重点关注公司财务指标与同业的显著偏离等；2）从公司业务入手，重点关注关联交易、大量业务外包和复杂的股权架构等；3）从股东行为入手，重点关注股东与高管的减持行为等；4）从审计环节入手，重点关注审计中介和公司财务高管的变动等。"
+  ],
+  "reasoning_summary": "基于提供的证据，未发现指向系统性财务舞弊的直接高风险信号。公司披露的风险（竞争、供应链）属于行业普遍存在的经营风险，且公司未披露重大负面事件或治理缺陷。然而，存在需要进一步核查的关注点：1）关联方交易详情缺失，需根据外部检索提示核查是否存在异常资金往来；2）公司承认面临毛利率下行压力，需结合具体财务数据（如毛利率趋势、现金流与利润匹配度）分析其影响；3）外部监管环境趋严，要求对所有上市公司保持警惕。当前证据不支持将单点经营风险升级为舞弊高风险判断。",
+  "suggestions": [
+    "获取并审阅完整年报中的“Item 13. Certain Relationships and Related Transactions, and Director Independence”部分，核查关联方交易的性质、金额及商业实质，以排除资金占用风险。",
+    "结合公司具体财务数据（如分季度/分产品毛利率、应收账款周转率、经营现金流净额与净利润比率）分析竞争和供应链风险对财务表现的量化影响。",
+    "关注公司审计机构是否稳定，以及高管、大股东近期是否有异常减持行为，作为外部检索提示的风险排查维度。",
+    "鉴于公司业务模式复杂（硬件+服务），需分析服务收入增长与活跃设备用户基数的匹配性，以及跨地域运营的收入确认政策。"
+  ],
+  "confidence": 0.75,
+  "_external_search": [
+    {
+      "url": "http://www.aastocks.com/tc/usq/analysis/company-fundamental/company-profile/",
+      "title": "Apple Inc. (AAPL.US) - 公司概括Company Profile",
+      "content": "關於, 蘋果公司從事智能手機、個人電腦、平板電腦、可穿戴設備和配件的設計、製造和銷售，以及其他各類相關服務。它通過以下地理區域運營：美洲、歐洲、大中華區、日本和",
+      "score": 0.9997198,
+      "raw_content": null
+    },
+    {
+      "url": "https://passiveincomego.com/aapl/",
+      "title": "蘋果公司（Apple Inc.）",
+      "content": "蘋果公司的主要產品包括iPhone、iPad、Mac電腦、Apple Watch、iOS操作系統、iTunes、App Store等。此外，公司還提供一系列數位服務，如iCloud、Apple Music",
+      "score": 0.99635005,
+      "raw_content": null
+    },
+    {
+      "url": "https://blog.csdn.net/shizheng_Li/article/details/147078573",
+      "title": "苹果公司（Apple Inc.）商业模式及发展历程分析原创",
+      "content": "苹果公司（Apple Inc.）是一家全球领先的科技企业，凭借创新的产品和卓越的商业模式成为全球最有价值的公司之一。目前苹果市值已高达约3.8万亿美元(Apple",
+      "score": 0.993255,
+      "raw_content": null
+    },
+    {
+      "url": "https://www.apple.com/",
+      "title": "Apple",
+      "content": "*   [Apple](https://www.apple.com/). *   [Store](https://www.apple.com/us/shop/goto/store). *   [iPad](https://www.apple.com/ipad/). *   [iPhone](https://www.apple.com/iphone/). *   [Watch](https://www.apple.com/watch/). *   [Entertainment](https://www.apple.com/entertainment/). *   [](https://www.apple.com/us/search). *   [](https://www.apple.com/us/shop/goto/bag)0+. [](https://www.apple.com/iphone/). [](https://www.apple.com/us/shop/goto/store). [Shop](https://www.apple.com/us/shop/goto/store). [](https://www.apple.com/ipad-air/). [](https://www.apple.com/macbook-pro/). [](https://www.apple.com/airpods-pro/). [](https://www.apple.com/us/shop/goto/trade_in). [Get your estimate](https://www.apple.com/us/shop/goto/trade_in). [](https://www.apple.com/apple-card/). *   [![Image 1](https://is1-ssl.mzstatic.com/image/thumb/OmAEHiPsBUBSNjqgm9ItjA/1250x668sr.jpg) ![Image 3](https://www.apple.com/v/home/cj/images/tv-gallery/logo_hero_light__d7t8cya4x26a_small.png)![Image 5](https://is1-ssl.mzstatic.com/image/thumb/lvZ2b3skKnno7C-36QvFrg/220x54.png) Stream now Comedy New season.](https://tv.apple.com/us/show/shrinking/umc.cmc.apzybj6eqf6pzccd97kev7bs?l=en-US?itscg=10000&itsct=atv-apl_hp-stream_now--220622). *   [![Image 7](https://is1-ssl.mzstatic.com/image/thumb/810FL_VK0SEREgoMM3eKtA/1250x668sr.jpg) ![Image 9](https://www.apple.com/v/home/cj/images/tv-gallery/logo_hero_light__d7t8cya4x26a_small.png)![Image 11](https://is1-ssl.mzstatic.com/image/thumb/5hSLmiaBKPfXrtjUJ6GHTQ/220x54.png) Stream now Thriller Who can you trust when it’s all on the line?](https://tv.apple.com/us/show/hijack/umc.cmc.1dg08zn0g3zx52hs8npoj5qe3?l=en-US?itscg=10000&itsct=atv-apl_hp-stream_now--220622). *   [![Image 13](https://is1-ssl.mzstatic.com/image/thumb/eWC5pgawHHIjpIvM2FDJdA/1250x668sr.jpg) ![Image 15](https://www.apple.com/v/home/cj/images/tv-gallery/logo_hero_light__d7t8cya4x26a_small.png)![Image 17](https://is1-ssl.mzstatic.com/image/thumb/2Pvq9Q1gy7cxOpfXK1_8Ew/220x54.png) Stream now Adventure New season Feb 27.](https://tv.apple.com/us/show/monarch-legacy-of-monsters/umc.cmc.62l8x0ixrhyq3yaqa5y8yo7ew?l=en-US?itscg=10000&itsct=atv-apl_hp-stream_now--220622). *   [![Image 25](https://is1-ssl.mzstatic.com/image/thumb/zLbkVwwHwe8I5EtuXc8wWg/1250x668sr.jpg) ![Image 27](https://www.apple.com/v/home/cj/images/tv-gallery/logo_hero_light__d7t8cya4x26a_small.png)![Image 29](https://is1-ssl.mzstatic.com/image/thumb/RHO4MKL0MT0Daq-hINei5w/220x54.png) Stream now Action 4 Oscar® Nominations Including Best Picture](https://tv.apple.com/us/movie/f1-the-movie/umc.cmc.3t6dvnnr87zwd4wmvpdx5came?l=en-US?itscg=10000&itsct=atv-apl_hp-stream_now--220622). *   [![Image 31](https://is1-ssl.mzstatic.com/image/thumb/S9dLxU_nCvhomqGnI3-d_g/1250x668sr.jpg) ![Image 33](https://www.apple.com/v/home/cj/images/tv-gallery/logo_hero_light__d7t8cya4x26a_small.png)![Image 35](https://is1-ssl.mzstatic.com/image/thumb/BxM84eq3qmaQrTcELLWAPQ/220x54.png) Stream now Drama Happiness is a state of mind.](https://tv.apple.com/us/show/pluribus/umc.cmc.37axgovs2yozlyh3c2cmwzlza?l=en-US?itscg=10000&itsct=atv-apl_hp-stream_now--220622). *   [![Image 37](https://is1-ssl.mzstatic.com/image/thumb/fhmbI8Mv8fXjBW0bVcW2xg/1250x668sr.jpg) ![Image 39](https://www.apple.com/v/home/cj/images/tv-gallery/logo_hero_light__d7t8cya4x26a_small.png)![Image 41](https://is1-ssl.mzstatic.com/image/thumb/Cc6MMzxFzD1gVqnd6IslKA/220x54.png) Stream now Comedy Kindness makes a comeback.](https://tv.apple.com/us/show/ted-lasso/umc.cmc.vtoh0mn0xn7t3c643xqonfzy?l=en-US?itscg=10000&itsct=atv-apl_hp-stream_now--220622). *   [![Image 49](https://is1-ssl.mzstatic.com/image/thumb/ctu2ZNuCjL3Nyej1udyVRA/1250x668sr.jpg) ![Image 51](https://www.apple.com/v/home/cj/images/tv-gallery/logo_hero_light__d7t8cya4x26a_small.png)![Image 53](https://is1-ssl.mzstatic.com/image/thumb/oif7hHIsgsaCP0ZL4RKmpg/220x54.png) Stream now Drama The truth is the top story.](https://tv.apple.com/us/show/the-morning-show/umc.cmc.25tn3v8ku4b39tr6ccgb8nl6m?l=en-US?itscg=10000&itsct=atv-apl_hp-stream_now--220622). *   [Store](https://www.apple.com/us/shop/goto/store). *   [iPad](https://www.apple.com/ipad/). *   [iPhone](https://www.apple.com/iphone/). *   [Watch](https://www.apple.com/watch/). *   [Gift Cards](https://www.apple.com/us/shop/goto/giftcards). *   [Apple Store Account](https://www.apple.com/us/shop/goto/account). *   [Find a Store](https://www.apple.com/retail/). *   [Apple and Business](https://www.apple.com/business/). *   [Shop for Business](https://www.apple.com/retail/business/). *   [Apple and Healthcare](https://www.apple.com/healthcare/). *   [Apple and Government](https://www.apple.com/government/).",
+      "score": 0.41679665,
+      "raw_content": null
+    },
+    {
+      "url": "https://www.apple.com.cn/",
+      "title": "Apple (中国大陆) - 官方网站",
+      "content": "探索Apple 的创新世界，选购各式iPhone、iPad、Apple Watch 和Mac，浏览各类配件、娱乐产品，并获得相关产品的专家服务支持。",
+      "score": 0.20055768,
+      "raw_content": null
+    }
+  ]
+}

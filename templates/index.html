@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>多智能体财务舞弊识别系统</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body data-has-key="{{ 'true' if has_api_key else 'false' }}">
+  <div class="background">
+    <div class="orb orb-one"></div>
+    <div class="orb orb-two"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <header class="top-bar">
+    <div class="brand">
+      <div class="logo">FFMAS</div>
+      <div>
+        <h1>多智能体财务舞弊识别系统</h1>
+        <p>智能博弈 · 证据驱动 · 监管级呈现</p>
+      </div>
+    </div>
+    <div class="status-pill" id="status-pill">就绪</div>
+  </header>
+
+  <main class="layout">
+    <aside class="panel">
+      <h2>运行配置</h2>
+      <div class="form-group">
+        <label>LLM Provider</label>
+        <input id="provider" type="text" value="{{ defaults.provider }}" />
+      </div>
+      <div class="form-group">
+        <label>LLM Model</label>
+        <input id="model" type="text" value="{{ defaults.model }}" />
+      </div>
+      <div class="form-group">
+        <label>LLM Base URL</label>
+        <input id="base_url" type="text" value="{{ defaults.base_url }}" />
+      </div>
+      <div class="form-row">
+        <label class="switch">
+          <input id="enable_defense" type="checkbox" checked />
+          <span class="slider"></span>
+        </label>
+        <span>启用辩护智能体</span>
+      </div>
+      <div class="form-row">
+        <label class="switch">
+          <input id="use_samples" type="checkbox" {% if has_samples %}checked{% endif %} />
+          <span class="slider"></span>
+        </label>
+        <span>使用样本文档</span>
+      </div>
+      <button class="primary" id="run-btn">运行分析</button>
+      <div class="hint">
+        基于 AAPL 10-K 的演示模式。<br />
+        API Key 从环境变量读取，不在前端显示。
+      </div>
+      {% if not has_api_key %}
+      <div class="hint warning">未检测到 API Key，请在 .env 中配置 LLM_API_KEY。</div>
+      {% endif %}
+    </aside>
+
+    <section class="content">
+      <section class="hero">
+        <div>
+          <h2>多智能体对抗推理可视化</h2>
+          <p>通过指控、辩护、裁决三段式推理，将舞弊风险收敛为可解释的监管级报告。</p>
+        </div>
+        <div class="hero-actions">
+          <button class="ghost" id="download-final" disabled>下载最终报告</button>
+          <button class="ghost" id="download-workpaper" disabled>下载工作底稿</button>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="card timeline">
+          <h3>推理流程</h3>
+          <ul id="timeline">
+            <li data-step="collect">信息汇聚与结构化底稿</li>
+            <li data-step="base">基础风险识别</li>
+            <li data-step="agents">指向型舞弊智能体</li>
+            <li data-step="defense">辩护分析智能体</li>
+            <li data-step="judge">裁决智能体输出</li>
+          </ul>
+        </div>
+        <div class="card step-output">
+          <h3>步骤输出</h3>
+          <div id="step-outputs" class="step-outputs">
+            <details open>
+              <summary>信息汇聚与结构化底稿</summary>
+              <div class="step-body" id="workpaper-output">—</div>
+            </details>
+            <details>
+              <summary>基础风险识别</summary>
+              <div class="step-body" id="base-output">—</div>
+            </details>
+            <details>
+              <summary>指向型舞弊智能体</summary>
+              <div class="step-body" id="agent-output">—</div>
+            </details>
+            <details>
+              <summary>辩护分析智能体</summary>
+              <div class="step-body" id="defense-output">—</div>
+            </details>
+            <details>
+              <summary>裁决智能体输出</summary>
+              <div class="step-body" id="final-output">—</div>
+            </details>
+          </div>
+        </div>
+        <div class="card arena">
+          <h3>多智能体对抗棋盘</h3>
+          <div class="agents" id="agents">
+            <div class="agent" data-agent="base">
+              <h4>基础风险智能体</h4>
+              <p class="status">等待中</p>
+              <div class="body"></div>
+            </div>
+            <div class="agent" data-agent="fraud_type_A">
+              <h4>虚构交易类收入舞弊</h4>
+              <p class="status">等待中</p>
+              <div class="body"></div>
+            </div>
+            <div class="agent" data-agent="fraud_type_B">
+              <h4>净利润操纵舞弊</h4>
+              <p class="status">等待中</p>
+              <div class="body"></div>
+            </div>
+            <div class="agent" data-agent="fraud_type_C">
+              <h4>会计操纵收入舞弊</h4>
+              <p class="status">等待中</p>
+              <div class="body"></div>
+            </div>
+            <div class="agent" data-agent="fraud_type_D">
+              <h4>净资产舞弊</h4>
+              <p class="status">等待中</p>
+              <div class="body"></div>
+            </div>
+            <div class="agent" data-agent="fraud_type_E">
+              <h4>资金占用舞弊</h4>
+              <p class="status">等待中</p>
+              <div class="body"></div>
+            </div>
+            <div class="agent" data-agent="fraud_type_F">
+              <h4>特殊行业/业务模式</h4>
+              <p class="status">等待中</p>
+              <div class="body"></div>
+            </div>
+            <div class="agent" data-agent="defense">
+              <h4>辩护分析智能体</h4>
+              <p class="status">等待中</p>
+              <div class="body"></div>
+            </div>
+            <div class="agent highlight" data-agent="judge">
+              <h4>裁决智能体</h4>
+              <p class="status">等待中</p>
+              <div class="body"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="card report">
+          <h3>综合裁决报告</h3>
+          <div class="report-grid">
+            <div>
+              <p class="label">总体风险等级</p>
+              <p class="value" id="risk-level">—</p>
+            </div>
+            <div>
+              <p class="label">接受的风险点</p>
+              <ul id="accepted-points"></ul>
+            </div>
+            <div>
+              <p class="label">驳回的风险点</p>
+              <ul id="rejected-points"></ul>
+            </div>
+            <div>
+              <p class="label">监管建议</p>
+              <ul id="suggestions"></ul>
+            </div>
+          </div>
+          <div class="report-note">
+            <p><strong>裁决依据</strong></p>
+            <p id="rationale">—</p>
+            <p class="muted" id="uncertainty">—</p>
+          </div>
+        </div>
+        <div class="card evidence">
+          <h3>证据链摘要</h3>
+          <div id="evidence-list" class="evidence-list"></div>
+        </div>
+        <div class="card evidence">
+          <h3>外部检索摘要</h3>
+          <div id="external-search" class="evidence-list"></div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

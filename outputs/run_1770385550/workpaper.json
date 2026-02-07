@@ -1,0 +1,24 @@
+{
+  "company_profile": "Example Co.",
+  "financial_summary": "Summary",
+  "risk_disclosures": "Risks",
+  "major_events": "Events",
+  "governance_signals": "Governance",
+  "industry_comparables": "Peers",
+  "announcements_summary": "Announcements",
+  "related_parties_summary": "Related parties",
+  "industry_benchmark_summary": "Benchmark",
+  "external_search_summary": "External summary",
+  "fraud_type_A_block": "A-block",
+  "fraud_type_B_block": "B-block",
+  "fraud_type_C_block": "C-block",
+  "fraud_type_D_block": "D-block",
+  "fraud_type_E_block": "E-block",
+  "fraud_type_F_block": "F-block",
+  "evidence": [
+    {
+      "quote": "Sample",
+      "source": "p1"
+    }
+  ]
+}

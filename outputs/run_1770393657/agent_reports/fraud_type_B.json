@@ -1,0 +1,14 @@
+{
+  "risk_level": "low",
+  "risk_points": [
+    "pointB"
+  ],
+  "evidence": [
+    "evidenceB"
+  ],
+  "reasoning_summary": "summaryB",
+  "suggestions": [
+    "suggestB"
+  ],
+  "confidence": 0.4
+}

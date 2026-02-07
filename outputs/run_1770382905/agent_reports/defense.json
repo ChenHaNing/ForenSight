@@ -1,0 +1,28 @@
+{
+  "risk_level": "中等",
+  "risk_points": [
+    "公司面临来自欧盟、美国司法部及Epic Games等多起重大反垄断调查与诉讼，涉及罚款、禁令及业务模式调整风险。",
+    "公司高度依赖间接分销渠道（占净销售额60%），存在渠道压货（channel stuffing）以提前确认收入的风险。",
+    "公司对少数供应商存在重大财务依赖，供应商非贸易应收款集中度高，存在潜在的变相资金占用风险。",
+    "公司面临全球贸易政策变化（如美国新关税）及宏观经济波动，可能对供应链、成本和毛利率产生重大不利影响。",
+    "公司面临关键人才流失风险，其未来成功依赖于包括首席执行官在内的核心团队。",
+    "公司因爱尔兰税收案计提了102亿美元的一次性所得税费用，表明其面临重大的全球税务合规与负债风险。"
+  ],
+  "evidence": [
+    "\"On April 23, 2025, the Commission fined the Company €500 million in the Article 5(4) Investigation and issued a cease and desist order... The Company has appealed the Commission’s Article 5(4) decision.\" (Item 3. Legal Proceedings - Digital Markets Act Investigations)",
+    "\"During 2025, the Company’s net sales through its direct and indirect distribution channels accounted for 40% and 60%, respectively, of total net sales.\" (Item 1. Business - Markets and Distribution)",
+    "\"As of September 27, 2025, the Company had two vendors that individually represented 10% or more of total vendor non-trade receivables, which accounted for 46% and 23%.\" (Note 4 – Financial Instruments - Vendor Non-Trade Receivables)",
+    "\"Beginning in the second quarter of 2025, new tariffs were announced on imports to the U.S. (“U.S. Tariffs”), including additional tariffs on imports from China, India, Japan, South Korea, Taiwan, Vietnam and the European Union (“EU”), among others.\" (Item 1A. Risk Factors - Macroeconomic and Industry Risks)",
+    "\"The Company’s future success depends on the talents and efforts of its team members and the continued availability and service of key personnel, including its Chief Executive Officer, executive team and other highly skilled employees.\" (Item 1A. Risk Factors - Business Risks)",
+    "\"As a result, during the fourth quarter of 2024 the Company recorded a one-time income tax charge of $10.2 billion, net, which represented $15.8 billion payable to Ireland via release of amounts held in escrow...\" (Note 7 – Income Taxes - European Commission State Aid Decision)"
+  ],
+  "reasoning_summary": "报告基于提供的证据材料进行分析。风险点主要源自公司披露的法律诉讼、业务模式、财务数据及风险因素。证据表明，公司正面临多起重大且可能改变业务规则的反垄断法律挑战；其收入高度依赖间接分销渠道，结合舞弊风险提示，需关注收入确认的恰当性；对少数供应商的巨额非贸易应收款集中度高，结合舞弊风险提示，需审视其商业实质；同时，公司明确承认面临关税、人才流失等外部及内部运营风险。这些风险虽被公司披露并有相应管理（如上诉、风险委员会监督），但其潜在财务影响（如罚款、成本上升、业务中断）和合规调整压力是实质性的。未发现直接、确凿的虚构交易或资金占用证据，但相关业务结构存在理论上的舞弊风险敞口。",
+  "suggestions": [
+    "建议审计师重点复核与主要经销商/运营商的收入确认协议、退货政策及季度末销售数据，以评估是否存在渠道压货迹象。",
+    "建议详细审查供应商非贸易应收款（特别是占比较高的两家供应商）的合同条款、账龄、还款记录及商业实质，评估其合理性及是否存在关联方资金占用。",
+    "建议持续跟踪欧盟DMA调查、美国司法部诉讼及Epic Games案的最新进展，评估其可能导致的罚款、合规成本及对App Store等核心服务业务模式的潜在颠覆性影响。",
+    "建议进行税务敏感性分析，评估全球主要运营地区（尤其是欧盟）税收政策变化对公司未来税负的潜在影响。",
+    "建议分析服务收入（如App Store、云服务）的增长与关键非财务指标（如活跃设备数、开发者数量、应用下载量）的匹配关系，以验证收入真实性。"
+  ],
+  "confidence": 0.75
+}

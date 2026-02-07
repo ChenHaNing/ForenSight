@@ -1,0 +1,36 @@
+{
+  "company_profile": "Apple Inc. 是一家全球领先的科技公司，设计、制造和销售智能手机、个人电脑、平板电脑、可穿戴设备和配件，并提供各种相关服务。公司总部位于美国加利福尼亚州库比蒂诺，其产品和服务面向消费者、中小企业、教育、企业和政府市场。公司通过其零售和在线商店、直销团队以及第三方蜂窝网络运营商和其他经销商进行销售。截至2025年9月27日，公司拥有约166,000名全职等效员工。",
+  "financial_summary": "2025财年（截至2025年9月27日），公司总净销售额为4161.61亿美元，同比增长6%。其中，产品净销售额为3070.03亿美元，服务净销售额为1091.58亿美元。按产品线划分：iPhone净销售额为2095.86亿美元，Mac净销售额为337.08亿美元，iPad净销售额为280.23亿美元，可穿戴设备、家居和配件净销售额为356.86亿美元。毛利润为1952.01亿美元，毛利率为46.9%。净利润为1120.10亿美元。截至2025年9月27日，公司拥有现金及现金等价物359.34亿美元，有价证券964.86亿美元，总资产3592.41亿美元，总负债2855.08亿美元，股东权益737.33亿美元。",
+  "risk_disclosures": "公司面临宏观经济和行业风险，包括全球经济状况、贸易争端、地缘政治紧张、汇率波动、竞争加剧、技术快速变革等。业务风险包括依赖外包合作伙伴进行制造和物流、关键组件供应短缺或价格上涨、产品和服务的设计与制造缺陷、库存和资产减值风险、依赖第三方知识产权和软件开发者支持、数字内容获取、关键人才流失、分销商表现、信息技术系统故障、数据安全与隐私泄露、新业务战略和收购风险等。法律与合规风险包括面临各种法律诉讼和政府调查、全球复杂且不断变化的法律法规（涉及反垄断、隐私、数据安全、在线安全、消费者保护、人工智能、贸易、税收等）、以及来自不同利益相关方关于社会和环境问题的期望所带来的压力。财务风险包括净销售额和毛利率的波动与下行压力、汇率风险、投资组合价值波动、应收账款信用风险以及税率变化和潜在额外税务负债。",
+  "major_events": "1. 欧盟数字市场法案（DMA）调查：欧盟委员会于2024年3月和6月对苹果公司启动了两项正式调查，涉及App Store规则。2025年4月23日，欧盟委员会就其中一项调查对苹果处以5亿欧元罚款，并发布停止令。苹果已提起上诉。\n2. 美国司法部反垄断诉讼：2024年3月21日，美国司法部及多个州检察长对苹果提起民事诉讼，指控其在“高性能智能手机”和“智能手机”市场存在垄断或企图垄断行为。\n3. Epic Games诉讼：Epic Games对苹果提起的反垄断诉讼仍在进行中。2025年4月30日，加州地区法院认定苹果违反了2021年的禁令，并发布了新的禁令。苹果已提起上诉。\n4. 爱尔兰税收案（国家援助决定）：2024年9月，欧洲法院确认了欧盟委员会2016年的决定，即爱尔兰向苹果提供了非法国家援助。苹果在2024年第四季度计提了102亿美元（净额）的一次性所得税费用。\n5. 关税影响：2025年第二季度起，美国宣布对包括中国、印度、日本、韩国、台湾、越南和欧盟等地的进口商品加征新关税，可能对公司的供应链、成本和毛利率产生重大不利影响。",
+  "governance_signals": "公司董事会下设审计与财务委员会，负责监督包括网络安全在内的风险事项。公司设有企业信息安全负责人领导的专业团队管理网络安全风险，并向审计委员会定期汇报。公司披露了其高管薪酬计划、股权激励计划（如2022年员工持股计划）以及董事和高管的赔偿协议。公司有活跃的股票回购和分红计划，2025年宣布了新的高达1000亿美元的股票回购计划，并将季度股息从0.25美元提高至0.26美元。2025年10月31日，公司宣布首席会计官Chris Kondo将于2026年1月1日过渡职务，由Ben Borders接任。",
+  "industry_comparables": "文本未提供与同行业可比公司的具体财务或运营数据对比。但指出公司在全球智能手机、个人电脑、平板电脑和可穿戴设备市场中占有少数份额，且这些市场有时增长缓慢或整体收缩。公司面临来自拥有广泛产品线、低价产品、庞大装机量和客户基础的竞争对手的激烈竞争，价格竞争和利润率下行压力持续存在。",
+  "fraud_type_A_block": "虚构交易类收入舞弊：需关注收入确认的恰当性，是否存在通过虚构客户、伪造合同或物流单据、进行体外资金循环等方式虚增收入的风险。结合苹果业务模式，需审视其与经销商/运营商（占净销售额60%）的收入确认时点与条款，是否存在提前确认收入或向渠道过度压货（channel stuffing）的情况。同时，需关注其服务收入的真实性，特别是来自App Store、广告、云服务等业务的收入增长是否与用户活跃度、开发者生态等非财务数据匹配。",
+  "fraud_type_B_block": "资金占用舞弊：需关注公司是否存在被大股东、实际控制人或关联方非经营性占用资金的情况。重点审视其他应收款、预付账款等科目的构成与变动，以及现金流量表中“支付的其他与经营活动有关的现金”的明细。苹果公司披露了与外包制造合作伙伴相关的供应商非贸易应收款（2025年末331.80亿美元），需关注这些款项的性质、账期是否合理，是否存在变相资金占用。同时，需关注公司与关联方（包括高管控制的其他实体）之间的交易及资金往来是否公允、披露是否充分。",
+  "evidence": [
+    {
+      "quote": "During 2025, the Company’s net sales through its direct and indirect distribution channels accounted for 40% and 60%, respectively, of total net sales.",
+      "source": "Item 1. Business - Markets and Distribution"
+    },
+    {
+      "quote": "As of September 27, 2025, the Company had two vendors that individually represented 10% or more of total vendor non-trade receivables, which accounted for 46% and 23%.",
+      "source": "Note 4 – Financial Instruments - Vendor Non-Trade Receivables"
+    },
+    {
+      "quote": "The Company’s future success depends on the talents and efforts of its team members and the continued availability and service of key personnel, including its Chief Executive Officer, executive team and other highly skilled employees.",
+      "source": "Item 1A. Risk Factors - Business Risks"
+    },
+    {
+      "quote": "On April 23, 2025, the Commission fined the Company €500 million in the Article 5(4) Investigation and issued a cease and desist order... The Company has appealed the Commission’s Article 5(4) decision.",
+      "source": "Item 3. Legal Proceedings - Digital Markets Act Investigations"
+    },
+    {
+      "quote": "As a result, during the fourth quarter of 2024 the Company recorded a one-time income tax charge of $10.2 billion, net, which represented $15.8 billion payable to Ireland via release of amounts held in escrow...",
+      "source": "Note 7 – Income Taxes - European Commission State Aid Decision"
+    },
+    {
+      "quote": "Beginning in the second quarter of 2025, new tariffs were announced on imports to the U.S. (“U.S. Tariffs”), including additional tariffs on imports from China, India, Japan, South Korea, Taiwan, Vietnam and the European Union (“EU”), among others.",
+      "source": "Item 1A. Risk Factors - Macroeconomic and Industry Risks"
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "risk_level": "low",
+  "risk_points": [
+    "pointC"
+  ],
+  "evidence": [
+    "evidenceC"
+  ],
+  "reasoning_summary": "summaryC",
+  "suggestions": [
+    "suggestC"
+  ],
+  "confidence": 0.4,
+  "_external_search": [
+    {
+      "url": "https://economics-journal.com/index.php/ej/article/view/2841/2826",
+      "title": "科创板上市公司财务舞弊案例分析 - Economics",
+      "content": "舞弊成本与暴露风险失衡,共同构成了系统性造假的驱动机制。 基于此,本文从 ... 板差异化监管框架、防范系统性财务风险提供理论参照与实践. 启示,助力资本市场健康",
+      "score": 0.99933845,
+      "raw_content": null
+    },
+    {
+      "url": "http://ir.swupl.edu.cn:8080/xnzfdx/item/itemDetail/87249.shtml",
+      "title": "业绩承诺下企业财务舞弊风险的识别及审计师应对研究",
+      "content": "本文旨在揭示基于业绩承诺审计存在的审计风险类型及其应对措施，以降低审计风险，提高我国审计行业的整体质量水平。本文采用案例分析法和统计分析法，将研究对象选定为同济",
+      "score": 0.9989837,
+      "raw_content": null
+    },
+    {
+      "url": "http://www.fanwubi.org/Item/204448.aspx",
+      "title": "财务舞弊尽调要点及案例分析",
+      "content": "根据审计准则舞弊三角理论，舞弊风险因素包括动机/压力、机会、借口/态度。 图片. 图2 舞弊的风险因素. 1) 动机. 财务状况不佳、资金链紧张：公司的财务",
+      "score": 0.99879336,
+      "raw_content": null
+    },
+    {
+      "url": "https://auditcn.com/Item/210853.aspx",
+      "title": "上市公司财务舞弊特征分析——基于2007年至2018年6月 ...",
+      "content": "通过分析这87家上市公司的财务舞弊样本（以下简称样本公司），得以窥见财务舞弊的特征。在分析方法上，本文主要借鉴COSO《1998-2007舞弊财务报告》的分析框架，",
+      "score": 0.9981324,
+      "raw_content": null
+    },
+    {
+      "url": "https://pdf.hanspub.org/ecl2024134_3292312153.pdf",
+      "title": "基于GONE理论的上市公司财务舞弊问题研究",
+      "content": "DOI: 10.12677/ecl.2024.1341443 基于GONE理论的上市公司财务舞弊问题研究 ——以瑞幸咖啡为例 杜雪嫣 南京信息工程大学商学院，江苏 南京 收稿日期：2024年9月8日；录用日期：2024年10月11日；发布日期：2024年11月12日 摘 要 随着我国经济的持续发展以及资本市场的不断成熟，上市公司中的财务舞弊问题愈发频繁出现。频繁发 生的财务舞弊案件不仅严重削弱了投资者的信心， 造成资金流失， 还对市场经济秩序造成了严重的破坏， 阻碍了企业的正常经营和资本市场的健康发展。本文以瑞幸咖啡的财务舞弊事件为例，全面剖析了其舞 弊动因及手段，提出了针对性的治理建议，希望为遏制财务舞弊提供有效的理论依据与实践参考。 关键词 财务舞弊，瑞幸咖啡，GONE理论，动因分析 A Study on the Problem of Financial Fraud in Listed Companies Based on the GONE Theory —Taking Luckin Coffee as an Example Xueyan Du School of Business, Nanjing University of Information Science & Technology, Nanjing Jiangsu Received: Sep. 8th, 2024; accepted: Oct. 11th, 2024; published: Nov. 12th, 2024 Abstract With the continuous development of China’s economy and the continuous maturity of the capital market, the problem of financial fraud in listed companies has become more and more frequent. 管理层的贪婪 瑞幸咖啡的财务舞弊事件中，来自管理层的贪婪是其中一个很重要的诱因，而管理层的贪婪主要在 股票质押上体现出来。 据瑞幸咖啡于2020 年1 月8 日发布的招股说明书显示， 该公司的主要股东分别质 杜雪嫣 DOI: 10.12677/ecl.2024.1341443 2681 电子商务评论 押了30%、47%和100%的股份，这些股份高达公司总股份的49%。之所以出现如此大规模的股票质押， 很大程度上是因为瑞幸咖啡管理层的贪婪心理，尽管他们对外宣称这些资金会用于公司的运营，但实际 上很有可能会吸走这部分资金。 5.1.2. 杜雪嫣 DOI: 10.12677/ecl.2024.1341443 2685 电子商务评论 [16] 李海军.",
+      "score": 0.9965436,
+      "raw_content": null
+    }
+  ]
+}

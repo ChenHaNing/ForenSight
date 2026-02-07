@@ -1,0 +1,51 @@
+{
+  "risk_level": "medium",
+  "risk_points": [
+    "pointA"
+  ],
+  "evidence": [
+    "evidenceA"
+  ],
+  "reasoning_summary": "summaryA",
+  "suggestions": [
+    "suggestA"
+  ],
+  "confidence": 0.6,
+  "_external_search": [
+    {
+      "url": "http://www.kegongsi.com/index.php?r=article%2Fdetail&pid=616",
+      "title": "识别财务公司造假。这12种惯用手法及37种舞弊迹象告诉你",
+      "content": "（3）被审计单位根据其所处行业特点进行虚构销售交易。例如，被审计单位从事游戏运营业务，利用体外资金进行“刷单”，对其自有游戏进行充值以虚增收入。",
+      "score": 0.69672287,
+      "raw_content": null
+    },
+    {
+      "url": "http://www.fanwubi.org/Item/204451.aspx",
+      "title": "收入舞弊手法及其传导路径分析",
+      "content": "虚构的销售掺杂在真实的合同销售中，例如虚增每件商品的实际销售价格或者虚增销售数量或者两者的组合，公司账面上对该客户确认的收入远远大于实际销售收入，",
+      "score": 0.6796259,
+      "raw_content": null
+    },
+    {
+      "url": "https://economics-journal.com/index.php/ej/article/view/2841/2826",
+      "title": "科创板上市公司财务舞弊案例分析 - Economics",
+      "content": "... 舞弊被处罚共计约1600万. 元,处罚的1600万元与其虚构的收入和利润来说是不成比例的。 慧辰股份通过财务舞弊粉饰自己的财务报表,获得了上市的机. 会和更多的投资,而且1600",
+      "score": 0.61779,
+      "raw_content": null
+    },
+    {
+      "url": "https://core.ac.uk/download/pdf/343511296.pdf",
+      "title": "上市公司财务舞弊特征分析",
+      "content": "by 黄世忠 · 2019 · Cited by 3 — 交易. 造假类主要表现为上市公司管理层虚构. 交易以达到虚增收入的目标,最常见的. 是通过关联方客户或者隐性关联方,串. 通合谋虚构业务和收入.如表10所示,. 表5 舞弊发生",
+      "score": 0.5820878,
+      "raw_content": null
+    },
+    {
+      "url": "https://zhuanlan.zhihu.com/p/24703571",
+      "title": "共谋者—— 关联方交易与财务舞弊",
+      "content": "... 舞弊行为包括：. 关联方之间不正常/不恰当的资金往来；; 通过虚构或未经批准的关联交易套取公司资金；; 隐瞒来自隐性关联方的收入、以及关联关系，或通过关联交易虚构收入。",
+      "score": 0.5533369,
+      "raw_content": null
+    }
+  ]
+}

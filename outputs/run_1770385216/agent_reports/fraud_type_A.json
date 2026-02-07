@@ -1,0 +1,51 @@
+{
+  "risk_level": "medium",
+  "risk_points": [
+    "pointA"
+  ],
+  "evidence": [
+    "evidenceA"
+  ],
+  "reasoning_summary": "summaryA",
+  "suggestions": [
+    "suggestA"
+  ],
+  "confidence": 0.6,
+  "_external_search": [
+    {
+      "url": "https://www.researchgate.net/publication/336828925_kangdexincaiwuzaojiageiwomendailaidejingshi",
+      "title": "“康得新”财务造假给我们带来的警示",
+      "content": "一是通过资产状况造假。 康得新通过虚构销售业务方式虚增营业收入，并通过虚. 构采购、生产、研发费用、产品运输费等方式虚增营业成本。 虚构贸易对方都是大股东，康得",
+      "score": 0.9988752,
+      "raw_content": null
+    },
+    {
+      "url": "https://www.cicpa.org.cn/ztzl1/zgzckjs/zazhi2023/202303/P020230330252445530830.pdf",
+      "title": "行业建设与发展",
+      "content": "市公司存在交易造假型收入舞弊。 3. 明确配合造假的法律责任是抑制交易. 造假型收入舞弊的根本。不同于会计操纵型收. 入舞弊，交易造假型收入舞弊除了通过",
+      "score": 0.9978677,
+      "raw_content": null
+    },
+    {
+      "url": "https://economics-journal.com/index.php/ej/article/view/2841/2826",
+      "title": "科创板上市公司财务舞弊案例分析 - Economics",
+      "content": "... 舞弊被处罚共计约1600万. 元,处罚的1600万元与其虚构的收入和利润来说是不成比例的。 慧辰股份通过财务舞弊粉饰自己的财务报表,获得了上市的机. 会和更多的投资,而且1600",
+      "score": 0.99366105,
+      "raw_content": null
+    },
+    {
+      "url": "https://www.scribd.com/document/765719364/%E5%9F%BA%E4%BA%8EGONE%E7%90%86%E8%AE%BA%E7%9A%84%E5%8D%83%E5%B1%B1%E8%8D%AF%E6%9C%BA%E8%B4%A2%E5%8A%A1%E8%88%9E%E5%BC%8A%E6%A1%88%E4%BE%8B%E5%88%86%E6%9E%90-%E4%BD%95%E5%A8%87-1",
+      "title": "基于GONE理论的千山药机财务舞弊案例分析何娇",
+      "content": "虽然千山药机与华冠花炮和中苋科技正规签订了销售合同，但其销售并没有完成，其账面所记录的销售收入并未实质发生。而千山药机不仅违规确认了销售收入，还对此销售虚构了销售",
+      "score": 0.99021614,
+      "raw_content": null
+    },
+    {
+      "url": "https://www.cprc.moj.gov.tw/media/8436/518105515911.pdf?mediaDL=true",
+      "title": "國立交通大學 - 司法官學院犯罪防治研究中心",
+      "content": "(三) 財報不實常見的舞弊手法. 包含認列異常利益、虛假交易、提早認列收入、不瑝的關係人交易、. 不瑝的利益認列、不瑝的截止日銷售和重大財務資訊的忽略等104。 97.",
+      "score": 0.97482115,
+      "raw_content": null
+    }
+  ]
+}

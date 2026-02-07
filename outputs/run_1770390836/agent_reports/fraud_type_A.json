@@ -1,0 +1,51 @@
+{
+  "risk_level": "low",
+  "risk_points": [
+    "pointD"
+  ],
+  "evidence": [
+    "evidenceD"
+  ],
+  "reasoning_summary": "summaryD",
+  "suggestions": [
+    "suggestD"
+  ],
+  "confidence": 0.4,
+  "_external_search": [
+    {
+      "url": "https://www.costar.com/zh-cn/chn/products/benchmark/resources/data-insights-blog-2",
+      "title": "盈利数据在全面酒店标杆管理经验中的作用",
+      "content": "盈利数据和洞察力使您能够补充关键的顶线指标，并衡量营收决策相对于行业和竞争群对盈利能力的影响。了解运营绩效的全貌意味着您可以随时确定产生收入",
+      "score": 0.13939638,
+      "raw_content": null
+    },
+    {
+      "url": "https://www.imf.org/-/media/files/countries/resrep/chn/e-book-pbc-imf-conference-on-opening-up-and-competitive-neutrality-chn.pdf",
+      "title": "国际",
+      "content": "政府的商业企业不应仅因其为政府所有而享有对其私营部门竞. 争对手的净竞争优势。 澳大利亚，1996，联邦竞争. 中性政策文件. • 国家……保证各种所有制经济",
+      "score": 0.048496004,
+      "raw_content": null
+    },
+    {
+      "url": "https://documents1.worldbank.org/curated/en/892781639978730638/pdf/Global-investment-competitiveness-report-2017-2018-foreign-investor-perspectives-and-policy-implications.pdf",
+      "title": "2017/2018 年全球投资竞争力报告",
+      "content": "Tan和Edward Atkinson担任编辑助理。生产和后勤支持 由Aziz Gokdemir和Jewel McFadden提供。 John Diamond领导并由Egidio Germanetti、 Amelia Kelly、Kristina Nwazota 和 Madelynne Wager开展沟通工作。 第一章中所分析的全球投资竞争力 调查是由一家全球调查公司Kantar Public 代表世界银行集团进行的。我们特别感谢 以下Kanfar Public的同事们的贡献： Jamie Burnett、Lavinia Deaconu、Christopher Hanley和Marco Pelucchi。 该报告小组对许多个人、团体和组 织所做的无论正式或非正式贡献表示感 谢。正是他们提供的重要的评论和投入才 使得该报告能够成功发表。报告小组对这 些贡献铭记在心，如果对您给予的这些重 要贡献无意中忽略而没有正式答谢，我们 报告小组将深表歉意。 XIII BRICS 金砖国家，指巴西、俄罗斯联邦，印度、中国、南非 BIT 双边投资协定 （bilateral investment treaty） CATI 计算机辅助电话采访 （computer-assisted telephone interviews） CBA 成本效益分析 （cost-beneﬁt analysis） CCSD 冲突、安全与发展中心 （Center on Conﬂict， Security and Development） CIT 企业所得税 （corporate income tax） CORFO 智利经济发展署 （Corporación de Fomento de la Producción de Chile） CPIA 国家政策和制度评估 （Country Policy and Institutional Assessment） EAP 东亚和太平洋地区 （East Asia and Paciﬁc） ECA 欧洲和中亚地区 （Europe and Central Asia） EU 欧盟 （European Union） FCS 脆弱和受冲突影响的地区 （fragile and conﬂict-affected situations） FDI 外国直接投资 （foreign direct investment） FFP 和平基金 （The Fund for Peace） GDP 国内生产总值 （gross domestic product） GIC 全球投资竞争力 （Global Investment Competitiveness） GVC 全球价值链 （global value chain） ICT 信息通信技术 （information and communications technology） IEG 独立评估小组 （Independent Evaluation Group） IFC 国际金融公司 （International Finance Corporation） IPA 投资促进机构 （investment promotion agency） ISIC 国际标准产业分类 （International Standard Industrial Classiﬁcation） IT 信息技术 （information technology） 缩略语 XIV 2017/2018 年全球投资竞争力报告 LAC 拉丁美洲和加勒比地区 （Latin America and the Caribbean） M&A 并购 （mergers and acquisitions） MENA 中东和北非 （Middle East and North Africa） MNC 跨国公司 （multinational corporation） ODA 官方发展援助 （Ofﬁcial Development Assistance） OECD 经济合作与发展组织 （Organisation for Economic Co-operation and Development） OFDI 对外直接投资 （outward foreign direct investment） POEs 民营企业 （privately owned enterprises） PPML 泊松伪极大似然 （Poisson Pseudo-Maximum Likelihood） R&D 研究与开发 （research and development） SAR 南亚地区 （South Asia Region） SDGs 可持续发展目标 （Sustainable Development Goals） SDP 供应商开发计划 （Supplier Development Program） SEZ 经济特区 （special economic zone） SMEs 中小企业 （small and medium-size enterprises） SOEs 国有企业 （state-owned enterprises） SSA 撒哈拉以南非洲 （Sub-Saharan Africa） UCC 资本使用者成本 （user cost of capital） UNCTAD 联合国贸易和发展会议 （United Nations Conference on Trade and Development） UNSD 联合国统计司 （United Nations Statistics Division） USAID 美国国际开发署 （United States Agency for International Development） VAT 增值税 （value added tax） WBG 世界银行集团 （The World Bank Group） WEF 世界经济论坛 （World Economic Forum） 1 外国投资对经济发展有重要贡献 对于许多发展中国家 1而言，外国直 接投资 （FDI） 规模已超过官方发展援助 （ODA） 、境外汇款或组合投资流，成为 外部金融的最大来源。在2016 年，全球 近1.75万亿美元的FDI流量中，超过40% 的资金流向发展中国家，提供了急需的 私有资本 （图0.1） 。然而，实现可持续发 展目标 （SDGS） 2所需的融资仍然大得多， 而且大多数无法靠现有的FDI 流入来满 足——尤其是在脆弱和受冲突影响的地区",
+      "score": 0.0043823365,
+      "raw_content": null
+    },
+    {
+      "url": "https://www.mayerbrown.com/-/media/files/news/2012/08/rising-tide/files/alb-china/fileattachment/alb-china.pdf",
+      "title": "Antitrust",
+      "content": "Competition specialists are joining forces with litigators to fight for their clients, and it appears that dedicated antitrust litigation practices may make an appearance on the domestic legal scene sooner rather than later, finds Candice Mak 在中国 ， 由于越来越多公司正在走上反垄断战场 ， 因此律师 的角色显得愈发重要。 随着近几个月数宗影响巨大的反垄断 案件登上新闻头条 （ 包括奇虎360诉腾讯案 ） ， 反垄断诉讼 的发生率明显上升。 Candice Mak发现 ， 反垄断及反不正当 竞争业务方面的专家已纷纷加入诉讼律师的行列 ， 共同为其 客户争取权益 ， 而专注于反垄断诉讼方面的法律业务也可能 很快会出现在国内法律舞台上。 Rising **The Chinese translation of this story was prepared by Synmax Translation** Antitrust 63 WWW.LEGALBUSINESSONLINE.COM : @ALB_Magazine : Connect with Asian Legal Business 风起潮涌 tide ASIAN LEGAL BUSINESS august 2012 Antitrust 64 “In the long run, as the practice matures, dedicated antitrust litigators could be real assets for companies seeking such services.” Susan Ning, King & Wood Mallesons “从长远角度看 ， 随着反垄断司法实践的逐步成熟 ， 专业反垄断诉讼律 师对寻求该领域服务的公司而言或将成为真正的资产 。 ” — 宁宣凤律师 ， 金杜律师事务所 B y the end of 2011, there were 61 antitrust civil litigation cases accepted by the Chinese courts since the onset of the Anti-Monopoly Law (AML) in 2008.",
+      "score": 0.0030873693,
+      "raw_content": null
+    },
+    {
+      "url": "https://www.compcomm.hk/en/media/newsletter/files/Competition_Matters_Mar2017.pdf",
+      "title": "競爭快訊",
+      "content": "競委會與加拿大競爭局簽署諒解備忘錄加強雙邊合作 Commission and Canadian Competition Bureau strengthen cooperation under MOU -4-主席胡紅玉女士於去年12 月與加拿大競爭事務專員 John Pecman 先生簽署諒解備忘錄 Chairperson Ms Anna Wu signed a MOU with Canadian Competition Bureau’s Commissioner Mr John Pecman last December 競委會於2016 年11 月發布了一份意見公告，呼籲香港建築師學會（建築師學會）及香港規劃師學會（規 劃師學會）採取適當行動，刪除或修訂其專業操守準則中引起競爭問題的條文。 建築師學會及規劃師學會分別在其網站刊載專業操守準則，有關準則規管其會員的行為。雖然學會本身 乃法定團體，獲豁免不受《條例》規限，但作為其會員的業務實體，其行為並不享有該等豁免。兩家學 會的操守準則中，當時仍有部分條文限制其會員獨立定價及爭取客戶的自由，競委會認為這些限制非常 有問題。 截至2017 年1 月底，規劃師學會已經取消有問題的條文，而建築師學會亦已暫停執行有關條文。競委會 歡迎兩間協會所採取的糾正措施。 競委會重申，即使獲豁免團體不受《條例》的行為守則規限，但仍受制於競委會的調查權力。當情況符 合《條例》第5 條所列出的條件時，行政長官會同行政會議可隨時藉規例使《條例》的行為守則及其他 相關條文適用於任何法定團體。 所有獲豁免的團體應秉持《條例》的精神，停止可能損害競爭的做法。所有行業及專業協會，不論它們 是否獲得豁免，都應避免從事反競爭行為，以身作則，維護本港自由平等的競爭環境，因爲這些團體的 行爲，對相關市場及香港不同經濟活動的影響極為深遠。 按此瀏覽競委會的意見公告。 In late November 2016, the Commission published an advisory bulletin calling upon two professional associations, namely, the Hong Kong Institute of Architects (HKIA) and the Hong Kong Institute of Planners (HKIP), to take appropriate action to remove or amend certain provisions in their respective codes of conduct which have raised competition concerns. 參加「競爭有道」比賽 贏取新加坡遊學之旅 Compete to win a Singapore study trip 最新動態 Current & upcoming activities 香港及國際專家探討本港競爭法議題 Local and international experts to explore aspects of the Hong Kong competition regime 競委會與香港競爭法學會將於2017 年4 月6 日在金鐘統一會議中心合辦研討會。香港及海外法律界 人士、執法人員及學者將聚首一堂，討論議題包括在本港執行競爭法的挑戰及縱向協議。 The Commission and the Hong Kong Competition Association will jointly present a seminar on “Aspects of the Hong Kong Competition Law Regime” on 6 April 2017 at the United Conference Centre, Admiralty.",
+      "score": 0.0030043432,
+      "raw_content": null
+    }
+  ]
+}

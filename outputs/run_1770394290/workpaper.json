@@ -1,0 +1,172 @@
+{
+  "company_profile": "Apple Inc. 是一家在纳斯达克上市的大型加速申报公司，业务涵盖硬件产品（iPhone、Mac、iPad、可穿戴设备及配件）和软件服务。截至2025年9月27日财年，公司总营收为4161.61亿美元。截至2025年10月17日，已发行普通股为147.76亿股。",
+  "financial_summary": "2025财年总营收4161.61亿美元，同比增长6.4%。iPhone是最大收入来源（2095.86亿美元，占比约50.4%），服务收入增长显著（1091.58亿美元，同比增长13.5%）。毛利率为46.9%，营业利润率为32.0%，净利率为26.9%。资产周转率为1.16。截至2025年9月27日，现金及现金等价物为359.34亿美元，总递延收入为137亿美元，其中66%预计在一年内确认。",
+  "risk_disclosures": "报告包含前瞻性陈述警示，提及业务面临的风险因素，包括宏观经济波动、供应链风险、竞争加剧、监管变化以及地缘政治不确定性（如大中华区业务集中度）。",
+  "major_events": "公司已对先前财务报表中的错误进行了更正。截至2025年3月28日，非关联方持有的公司股票总市值约为3.25万亿美元。",
+  "governance_signals": "公司为大型加速申报公司，遵循严格的财务报告要求。报告附注中披露了详细的金融工具公允价值计量（分Level 1和Level 2），并提及部分现金受托管或限制。公司章程（2020年8月修订）和附例（2024年8月修订）已归档。",
+  "industry_comparables": "在计算机硬件行业（截至2025年第三季度），苹果公司过去12个月营收为4161.61亿美元，市场份额为14.71%。主要竞争对手包括亚马逊（营收6913.30亿美元，市场份额24.43%）、Alphabet（营收3854.77亿美元，市场份额13.62%）、微软（营收2938.12亿美元，市场份额10.38%）和三星电子（营收2151.00亿美元，市场份额7.60%）。",
+  "announcements_summary": "公司提交了截至2025年9月27日财年的10-K年度报告。根据外部检索，苹果公司公布了2025财年第四季度财务业绩，季度营收为1025亿美元，同比增长8%。2026财年第一季度财报电话会议提及iPhone 17系列表现强劲，服务收入创历史新高。",
+  "related_parties_summary": "根据提供的文本，未明确提及具体的关联方交易信息。报告主要披露了按产品和服务划分的收入构成以及地理分部信息。",
+  "industry_benchmark_summary": "根据外部检索信息，苹果公司的毛利率（近四季46.2%）高于行业（同业中位数28.30%），在同行中排名位于前11.76%。营业利润率与自由现金流也表现强劲，显示出卓越的成本控制、溢价能力和强大的现金流生成能力。",
+  "external_search_summary": "外部检索显示，苹果2025财年营收4161.61亿美元，同比增长6.4%。2025年第四季度营收1024.7亿美元，同比增长8%。2026财年第一季度（截至2025年12月31日）营收1437.56亿美元，同比增长15.65%。公司预计2026财年第一季度营收同比增长10-12%，iPhone实现两位数增长，服务收入持续增长。公司正积极将“Apple Intelligence”AI技术整合至全线产品，以推动升级周期。",
+  "financial_metrics": {
+    "profitability": {
+      "roe": 0.0,
+      "roa": 0.3117962593356549,
+      "gross_margin": 0.4690516410716045,
+      "operating_margin": 0.31970799762591884,
+      "net_margin": 0.2691506412181824
+    },
+    "liquidity": {
+      "current_ratio": 0.8932929222186667,
+      "quick_ratio": 0.858770399261008,
+      "cash_ratio": 0.21695214060169896
+    },
+    "leverage": {
+      "debt_to_equity": 0.0,
+      "interest_coverage": 0.0,
+      "debt_service_coverage": 0.0
+    },
+    "efficiency": {
+      "asset_turnover": 1.1584451663368045,
+      "inventory_turnover": 38.6428821266177,
+      "receivables_turnover": 10.46235261583327,
+      "days_sales_outstanding": 34.88699085209811
+    },
+    "valuation": {
+      "pe_ratio": 0.0,
+      "eps": 0.007581941968123488,
+      "pb_ratio": 0.0,
+      "book_value_per_share": 0.0,
+      "ps_ratio": 0.0,
+      "ev_to_ebitda": 0.0
+    }
+  },
+  "metrics_notes": [
+    "income_statement.ebit 缺失或无法解析",
+    "income_statement.interest_expense 缺失或无法解析",
+    "income_statement.ebitda 缺失或无法解析",
+    "balance_sheet.shareholders_equity 缺失或无法解析",
+    "balance_sheet.total_debt 缺失或无法解析",
+    "cash_flow.financing_cash_flow 缺失或无法解析",
+    "market_data.share_price 缺失或无法解析",
+    "market_data.earnings_growth_rate 缺失或无法解析"
+  ],
+  "context_pack": {
+    "company_name": "Apple Inc.",
+    "business_overview": "The Company designs, manufactures and markets smartphones, personal computers, tablets, wearables and accessories, and sells a variety of related services.",
+    "segments": "The Company manages its business primarily on a geographic basis. (Note: The provided text excerpt is incomplete regarding segment details; this is the disclosed management approach.)",
+    "geographies": "The Company operates globally, with facilities and land owned or leased throughout the U.S. and in various places outside the U.S. for corporate functions, R&D, data centers, retail and other purposes.",
+    "revenue_mix": "Not explicitly detailed in the provided text. The Company's net sales and gross margins vary significantly across its products, services, geographic segments and distribution channels.",
+    "major_products": "Product lines include: iPhone (smartphones), Mac (personal computers), iPad (multipurpose tablets), Wearables, Home and Accessories. Services include: Advertising, AppleCare (service and support), Cloud Services, Digital Content (App Store, Apple Arcade, Apple Fitness+, Apple Music, Apple News+, Apple TV), and Payment Services (Apple Card, Apple Pay).",
+    "key_accounting_policies": "The Company's fiscal year is the 52- or 53-week period ending on the last Saturday of September. All information is based on this fiscal calendar unless otherwise stated.",
+    "top_risk_factors": "1. Legal and Regulatory: Subject to litigation, government investigations, and new/evolving laws (e.g., online safety, data privacy) which can lead to liability, fines, operational disruption, and increased costs. 2. Financial: Net sales and gross margins are subject to volatility and downward pressure from industry pricing pressures, competition, and demand stimulation challenges.",
+    "governance_overview": "The Board of Directors oversees the Company's risk management, including cybersecurity risks. The Audit Committee regularly reviews and discusses cybersecurity risks with management and reports to the Board.",
+    "audit_controls": "The Audit Committee is responsible for overseeing the Company's risk management processes related to cybersecurity. It regularly reviews and discusses these matters with management and recommends actions to the Board as deemed appropriate."
+  },
+  "context_capsule": "背景要点：\n- 公司：Apple Inc.\n- 业务概览：The Company designs, manufactures and markets smartphones, personal computers, tablets, wearables and accessories, and sells a variety of related services.\n- 业务分部：The Company manages its business primarily on a geographic basis. (Note: The provided text excerpt is incomplete regarding segment details; this is the disclosed management approach.)\n- 地域分布：The Company operates globally, with facilities and land owned or leased throughout the U.S. and in various places outside the U.S. for corporate functions, R&D, data centers, retail and other purposes.\n- 收入结构：Not explicitly detailed in the provided text. The Company's net sales and gross margins vary significantly across its products, services, geographic segments and distribution channels.\n- 主要产品/服务：Product lines include: iPhone (smartphones), Mac (personal computers), iPad (multipurpose tablets), Wearables, Home and Accessories. Services include: Advertising, AppleCare (service and support), Cloud Services, Digital Content (App Store, Apple Arcade, Apple Fitness+, Apple Music, Apple News+, Apple TV), and Payment Services (Apple Card, Apple Pay).\n- 关键会计政策：The Company's fiscal year is the 52- or 53-week period ending on the last Saturday of September. All information is based on this fiscal calendar unless otherwise stated.\n- 主要风险：1. Legal and Regulatory: Subject to litigation, government investigations, and new/evolving laws (e.g., online safety, data privacy) which can lead to liability, fines, operational disruption, and increased costs. 2. Financial: Net sales and gross margins are subject to volatility and downward pressure from industry pricing pressures, competition, and demand stimulation challenges.\n- 治理概览：The Board of Directors oversees the Company's risk management, including cybersecurity risks. The Audit Committee regularly reviews and discusses cybersecurity risks with management and reports to the Board.\n- 内控/审计：The Audit Committee is responsible for overseeing the Company's risk management processes related to cybersecurity. It regularly reviews and discusses these matters with management and recommends actions to the Board as deemed appropriate.\n",
+  "fraud_type_A_block": "收入确认：服务收入包含捆绑产品销售价格中服务递延价值的摊销，且存在大量递延收入（137亿美元）。需关注收入确认时点是否激进，特别是服务收入的摊销政策与大额递延收入的释放节奏。大中华区iPhone收入占比异常升高，需审视是否存在向渠道压货以提前确认收入的可能。",
+  "fraud_type_B_block": "存货与成本：存货周转率极高（38.64），远超一般制造业，可能与公司轻资产运营和强大的供应链管理有关，但也需核实存货跌价准备计提是否充分，尤其是在产品更新换代快的行业背景下。",
+  "fraud_type_C_block": "资产估值：持有大量金融资产（公允价值1324亿美元），其中Level 2工具占比高（980亿美元）。其估值依赖模型和可观察市场数据输入。需关注在利率或市场波动下，这些资产的公允价值计量是否合理，特别是抵押贷款和资产支持证券（230亿美元）的信用风险。",
+  "fraud_type_D_block": "负债与表外事项：递延收入是重要的负债项目，其未来实现计划（66%在一年内）的可靠性需评估。报告提及部分现金受限制或托管（2024年为26亿美元），需关注是否存在未充分披露的承诺或或有负债。",
+  "fraud_type_E_block": "公司治理与内控：作为大型加速申报公司，已更正前期报表错误，表明存在历史内控缺陷。需评估相关更正的性质、重要性及当前内控有效性。关联方交易披露有限。",
+  "fraud_type_F_block": "现金流与整体持续性：尽管盈利指标强劲，但流动比率（0.89）和速动比率（0.86）小于1，显示短期偿债能力依赖于经营现金流和外部融资的持续性。需结合经营性现金流详细分析，确保盈利质量。服务收入增长是未来可持续性的关键。",
+  "evidence": [
+    {
+      "quote": "Services net sales include amortization of the deferred value of services bundled in the sales price of certain products.",
+      "source": "收入/分部信息补充表格脚注(1)"
+    },
+    {
+      "quote": "As of September 27, 2025, the Company had total deferred revenue of $13.7 billion... expects 66% of total deferred revenue to be realized in less than a year",
+      "source": "收入/分部信息补充段落"
+    },
+    {
+      "quote": "except in Greater China, where iPhone revenue represented a moderately higher proportion of net sales.",
+      "source": "收入/分部信息补充段落"
+    },
+    {
+      "quote": "The valuation techniques used to measure the fair values of the Company’s Level 2 financial instruments... are based on quoted market prices or model-driven valuations using significant inputs derived from or corroborated by observable market data.",
+      "source": "Note 4 – Financial Instruments 脚注(1)"
+    },
+    {
+      "quote": "The Company’s proportion of net sales by disaggregated revenue source was generally consistent for each reportable segment...",
+      "source": "收入/分部信息补充段落"
+    },
+    {
+      "quote": "报告确认公司为在纳斯达克上市的大型加速申报公司，已对先前财务报表中的错误进行了更正。",
+      "source": "文本内容"
+    }
+  ],
+  "_react_search": [
+    {
+      "url": "https://artificall.com/analysis/companies/apple-inc/",
+      "title": "Apple 2026: Mastering Durable Advantage with Growing ...",
+      "content": "In 2025, iPhone remains the dominant revenue driver with $210B, followed by Services at $109B, showing strong and consistent growth. Wearables,",
+      "score": 0.99954176,
+      "raw_content": null
+    },
+    {
+      "url": "http://bullfincher.io/companies/apple/revenue",
+      "title": "Apple Revenue 2016-2025",
+      "content": "Apple's quarterly revenue was **$124.30 B**(Q1: Dec 2024), **$95.36 B**(Q2: Mar 2025), **$94.04 B**(Q3: Jun 2025), **$102.47 B**(Q4: Sep 2025) in fiscal year 2025. Apple's quarterly revenue was **$119.58 B**(Q1: Dec 2023), **$90.75 B**(Q2: Mar 2024), **$85.78 B**(Q3: Jun 2024), **$94.93 B**(Q4: Sep 2024) in fiscal year 2024. Apple's quarterly revenue was **$123.95 B**(Q1: Dec 2021), **$97.28 B**(Q2: Mar 2022), **$82.96 B**(Q3: Jun 2022), **$90.15 B**(Q4: Sep 2022) in fiscal year 2022. Apple's quarterly revenue was **$111.44 B**(Q1: Dec 2020), **$89.58 B**(Q2: Mar 2021), **$81.43 B**(Q3: Jun 2021), **$83.36 B**(Q4: Sep 2021) in fiscal year 2021. Apple's quarterly revenue was **$91.82 B**(Q1: Dec 2019), **$58.31 B**(Q2: Mar 2020), **$59.69 B**(Q3: Jun 2020), **$64.70 B**(Q4: Sep 2020) in fiscal year 2020. Apple's quarterly revenue was **$84.31 B**(Q1: Dec 2018), **$58.02 B**(Q2: Mar 2019), **$53.81 B**(Q3: Jun 2019), **$64.04 B**(Q4: Sep 2019) in fiscal year 2019. Apple's quarterly revenue was **$88.29 B**(Q1: Dec 2017), **$61.14 B**(Q2: Mar 2018), **$53.27 B**(Q3: Jun 2018), **$64.04 B**(Q4: Sep 2018) in fiscal year 2018.",
+      "score": 0.99690056,
+      "raw_content": null
+    },
+    {
+      "url": "https://www.macrotrends.net/stocks/charts/AAPL/apple/revenue",
+      "title": "Apple Revenue 2012-2025 | AAPL",
+      "content": "## Apple Revenue 2012-2025 | AAPL. Apple annual/quarterly revenue history and growth rate from 2012 to 2025. * Apple revenue for the quarter ending December 31, 2025 was **$143.756B**, a **15.65% increase** year-over-year. * Apple revenue for the twelve months ending December 31, 2025 was **$435.617B**, a **10.07% increase** year-over-year. * Apple annual revenue for 2025 was **$416.161B**, a **6.43% increase** from 2024. * Apple annual revenue for 2024 was **$391.035B**, a **2.02% increase** from 2023. * Apple annual revenue for 2023 was **$383.285B**, a **2.8% decline** from 2022. | Apple Annual Revenue (Millions of US $) |. | Apple Quarterly Revenue (Millions of US $) |. | Sector | Industry | Market Cap | Revenue |. Moreover, non-iPhone devices like Apple Watch and AirPod have gained significant traction. In fact, Apple dominates the Wearables and Hearables markets due to the growing adoption of Watch and AirPods. **Register to Continue Using Macrotrends**. Please register using your email address to continue enjoying our free content.",
+      "score": 0.9964619,
+      "raw_content": null
+    },
+    {
+      "url": "https://www.datainsightsmarket.com/companies/AAPL",
+      "title": "Apple Inc. (AAPL) Stock Price, Market Cap, Segmented ...",
+      "content": "**Keywords:** Apple, Q1 FY25, Earnings Call, Revenue, Profit, EPS, iPhone, Mac, iPad, Services, Apple Intelligence, AI, Emerging Markets, China, Gross Margin, Capital Return, Outlook, Guidance. The Q&A session focused on key areas like the impact of Apple Intelligence, performance in China, gross margin drivers, and the sustainability of growth in product categories. + **Response:** Tim Cook stated that the strength of the product lineup, particularly the **iPhone 16 family's double-digit YoY growth compared to the iPhone 15 family**, was the primary driver for the record upgrade rates in iPhone and Mac. The performance of Apple Silicon was also highlighted as a key factor for Mac upgrades. + **Strong Product Performance:** Double-digit growth in iPhone and Mac highlights the continued appeal and innovation of Apple's hardware. + The **record revenue for the September quarter and strong year-over-year growth** across key segments indicate resilience and continued demand for Apple's products and services.",
+      "score": 0.99014014,
+      "raw_content": null
+    },
+    {
+      "url": "https://csimarket.com/stocks/competitionSEG2.php?code=AAPL",
+      "title": "AAPL's Market share relative to its competitors, as of Q4 2025",
+      "content": "Apple Inc Market Share Apple Inc (NASDAQ: AAPL) Sector• TechnologyIndustry• Computer Hardware* Share * Post * Share * Share * Mail * Share Industry• Computer Hardware Sector• Technology Discover more New York Stock Exchange Sportswear ADIDAS Under Armour Apparel Nike American Eagle Shoes Electronics Fashion accessory AAPL's Market share relative to its competitors, as of Q3 2025 ============================================================== As of Q3 2025 (Revenue in Millions of $) Date modified: 2025-12-15T22:06:03+00:00 Select the Relationship:* Competition▼ * Competition * Customers * Suppliers * Computer Hardware * TechnologySelect the Category:* Comparison▼ * Quarterly Results * Stock Performance * Growth Rates * Per Employee * Efficiency * Management Effectiveness * Valuation * Market Share * Competition▼ * Customers * Suppliers * Computer Hardware * Technology* Market Share▼ * Basic Data * Quarterly Results * Stock Performance * Growth Rates * Per Employee * Efficiency * Management Effectiveness * Data by Segment * Market Share Download as CSV COMPANY NAME REVENUES 12 Months Ending Q3 2025 MARKET SHARE 12 Months Q3 2025 MARKET SHARE MRQ Q3 2025 MARKET SHARE A Quarter Before Q2 2025 Apple Inc416,161.00 14.71%13.98 %13.38 % Amazon com Inc691,330.00 24.43%24.58%23.85% Alphabet Inc385,477.00 13.62%13.96%13.72% Microsoft Corporation293,812.00 10.38%10.60%10.87% Samsung Electronics Co Ltd215,100.00 7.60%7.30%7.88% Meta Platforms Inc189,458.00 6.70%6.99%6.76% Dell Technologies Inc96,948.00 3.43%3.68%4.24% Walt Disney Co95,116.00 3.36%3.23%3.36% International Business Machines Corporation65,402.00 2.31%2.23%2.41% Hp Inc55,295.00 1.95%2.00%1.98% Charter Communications Inc55,099.00 1.95%1.87%1.96% Qualcomm Inc44,284.00 1.56%1.54%1.47% Netflix Inc44,207.56 1.56%1.57%1.58% Block Inc23,973.77 0.85%0.83%0.86% Adobe Inc23,181.00 0.82%0.82%0.84% Sonic Automotive Inc15,179.00 0.54%0.54%0.52% Synchrony Financial13,475.00 0.48%0.50%0.50% Optimum Communications Inc8,642.62 0.31%0.29%0.31% Sirius Xm Holdings Inc8,553.00 0.30%0.29%0.30% Autodesk Inc6,254.00 0.22%0.25%0.25% Take two Interactive Software inc6,218.70 0.22%0.24%0.21% Snap Inc5,772.27 0.20%0.21%0.19% Amc Entertainment Holdings Inc4,867.00 0.17%0.18%0.20% Logitech International S a4,684.41 0.17%0.16%0.16% Zoom Communications Inc4,666.84 0.16%0.17%0.17% Roblox Corporation4,556.30 0.16%0.19%0.15% Roku Inc4,542.18 0.16%0.17%0.16% Gen Digital Inc4,473.00 0.16%0.17%0.18% Ncr Atleos Corporation4,313.00 0.15%0.15%0.16% Pc Connection Inc2,878.50 0.10%0.10%0.11% Tegna Inc2,876.41 0.10%0.09%0.10% The New York Times Company2,749.23 0.10%0.10%0.10% Iac Inc2,736.52 0.10%0.08%0.08% Playtika Holding Corp2,726.90 0.10%0.09%0.10% Dropbox Inc2,527.90 0.09%0.09%0.09% Vizio Holding Corp1,736.70 0.06%0.06%0.06% Atlanticus Holdings",
+      "score": 0.9878528,
+      "raw_content": null
+    },
+    {
+      "url": "https://markets.financialcontent.com/wral/article/predictstreet-2025-12-12-apple-inc-aaplnasdaq-navigating-innovation-growth-and-geopolitical-headwinds",
+      "title": "Apple Inc. (AAPL/NASDAQ): Navigating Innovation, Growth ...",
+      "content": "Headquartered in Cupertino, California, Apple designs, manufactures, and markets a diverse portfolio of products and services, including the iPhone, Mac, iPad, Apple Watch, AirPods, Apple Vision Pro, and a comprehensive suite of services such as the App Store, Apple Music, and iCloud. * **Q1 Fiscal Year 2026 Outlook:** Apple projects 10-12% year-over-year revenue growth, double-digit iPhone growth, and continued Services growth. (AAPL) is strategically positioned for continued growth, leveraging its robust services segment, an ambitious product roadmap including AI-enhanced devices and new market entries, and a proactive stance on mergers and acquisitions, particularly in the artificial intelligence (AI) space. The company is strategically pivoting towards aggressive AI integration, termed \"Apple Intelligence,\" across its entire product line, aiming to drive a new wave of upgrades and enhance user experience with a privacy-first approach. The bullish case for Apple is compelling, driven by the sustained growth of its high-margin services, the anticipated AI-fueled iPhone upgrade cycle, and the potential for new product categories like foldable iPhones and advanced smart home devices.",
+      "score": 0.9996402,
+      "raw_content": null
+    },
+    {
+      "url": "https://artificall.com/analysis/companies/apple-inc/",
+      "title": "Apple 2026: Mastering Durable Advantage with Growing ...",
+      "content": "In 2025, iPhone remains the dominant revenue driver with $210B, followed by Services at $109B, showing strong and consistent growth. Wearables,",
+      "score": 0.99949265,
+      "raw_content": null
+    },
+    {
+      "url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+      "title": "aapl-20250927",
+      "content": "... hardware or software products and services. Defects can also exist in ... Apple Inc. | 2025 Form 10-K | 16. General Risks. The price of the Company's",
+      "score": 0.9994642,
+      "raw_content": null
+    },
+    {
+      "url": "https://s2.q4cdn.com/470004039/files/doc_financials/2025/ar/_10-K-2025-As-Filed.pdf",
+      "title": "2025 10-K Filing - Apple Inc.",
+      "content": "Cook, certify, as of the date hereof, pursuant to 18 U.S.C. Section 1350, as adopted pursuant to Section 906 of the Sarbanes-Oxley Act of 2002, that the Annual Report of Apple Inc. on Form 10-K for the fiscal year ended September 27, 2025 fully complies with the requirements of Section 13(a) or 15(d) of the Securities Exchange Act of 1934 and that information contained in such Form 10-K fairly presents in all material respects the financial condition and results of operations of Apple Inc. at the dates and for the periods indicated. Cook Chief Executive Officer I, Kevan Parekh, certify, as of the date hereof, pursuant to 18 U.S.C. Section 1350, as adopted pursuant to Section 906 of the Sarbanes-Oxley Act of 2002, that the Annual Report of Apple Inc. on Form 10-K for the fiscal year ended September 27, 2025 fully complies with the requirements of Section 13(a) or 15(d) of the Securities Exchange Act of 1934 and that information contained in such Form 10-K fairly presents in all material respects the financial condition and results of operations of Apple Inc. at the dates and for the periods indicated.",
+      "score": 0.9921233,
+      "raw_content": null
+    },
+    {
+      "url": "https://www.apple.com/newsroom/2025/10/apple-reports-fourth-quarter-results/",
+      "title": "Apple reports fourth quarter results",
+      "content": "*   [Apple](https://www.apple.com/). *   [Store](https://www.apple.com/us/shop/goto/store). *   [Shop the Latest](https://www.apple.com/us/shop/goto/store). *   [Mac](https://www.apple.com/us/shop/goto/buy_mac). *   [iPad](https://www.apple.com/us/shop/goto/buy_ipad). *   [iPhone](https://www.apple.com/us/shop/goto/buy_iphone). *   [Apple Watch](https://www.apple.com/us/shop/goto/buy_watch). *   [Apple Vision Pro](https://www.apple.com/us/shop/goto/buy_vision). *   [AirPods](https://www.apple.com/us/shop/goto/airpods/accessories). *   [Accessories](https://www.apple.com/us/shop/goto/buy_accessories). *   [Apple Trade In](https://www.apple.com/us/shop/goto/trade_in). *   [Financing](https://www.apple.com/us/shop/goto/payment_plan). *   [Education](https://www.apple.com/us/shop/goto/educationrouting). *   [Business](https://www.apple.com/retail/business/). *   [Shop Mac](https://www.apple.com/us/shop/goto/buy_mac). *   [Mac Accessories](https://www.apple.com/us/shop/goto/mac/accessories). *   [Financing](https://www.apple.com/us/shop/goto/payment_plan). *   [Education](https://www.apple.com/education/). *   [Shop iPad](https://www.apple.com/us/shop/goto/buy_ipad). *   [iPad Accessories](https://www.apple.com/us/shop/goto/ipad/accessories). *   [Financing](https://www.apple.com/us/shop/goto/payment_plan). *   [Education](https://www.apple.com/education/). *   [iPhone](https://www.apple.com/iphone/). *   [iPhone 17](https://www.apple.com/iphone-17/). *   [iPhone 16](https://www.apple.com/us/shop/goto/buy_iphone/iphone_16). *   [Shop iPhone](https://www.apple.com/us/shop/goto/buy_iphone). *   [iPhone Accessories](https://www.apple.com/us/shop/goto/iphone/accessories). *   [Apple Trade In](https://www.apple.com/us/shop/goto/trade_in#iphone). *   [Financing](https://www.apple.com/us/shop/goto/payment_plan). *   [Apple Trade In](https://www.apple.com/us/shop/goto/trade_in#watch). *   [Financing](https://www.apple.com/us/shop/goto/payment_plan). *   [Financing](https://www.apple.com/us/shop/goto/payment_plan). *   [AirPods Accessories](https://www.apple.com/us/shop/goto/airpods/accessories). *   [Entertainment](https://www.apple.com/entertainment/). *   [Explore Entertainment](https://www.apple.com/services/). *   [Accessories](https://www.apple.com/us/shop/goto/buy_accessories). *   [Shop All Accessories](https://www.apple.com/us/shop/goto/buy_accessories). *   [Mac](https://www.apple.com/us/shop/goto/mac/accessories). *   [iPad](https://www.apple.com/us/shop/goto/ipad/accessories). *   [iPhone](https://www.apple.com/us/shop/goto/iphone/accessories). *   [Apple Watch](https://www.apple.com/us/shop/goto/watch/accessories). *   [Apple Vision Pro](https://www.apple.com/us/shop/goto/vision/accessories). *   [AirPods](https://www.apple.com/us/shop/goto/airpods/accessories). *   [](https://www.apple.com/us/search). *   [Apple Trade In](https://www.apple.com/us/shop/goto/trade_in). *   [](https://www.apple.com/us/shop/goto/bag)0+. [Newsroom](https://www.apple.com/newsroom/). Read more](https://www.apple.com/newsroom/). [Apple](https://www.apple.com/). 1.   [Newsroom](https://www.apple.com/newsroom/). *   [Store](https://www.apple.com/us/shop/goto/store). *   [iPhone](https://www.apple.com/iphone/). *   [Accessories](https://www.apple.com/us/shop/goto/buy_accessories). *   [Apple Store Account](https://www.apple.com/us/shop/goto/account). *   [Apple Trade In](https://www.apple.com/us/shop/goto/trade_in). *   [Financing](https://www.apple.com/us/shop/goto/payment_plan). *   [Shopping Help](https://www.apple.com/us/shop/goto/help). *   [Shop for Business](https://www.apple.com/retail/business/). *   [Apple and Healthcare](https://www.apple.com/healthcare/). *   [Apple and Government](https://www.apple.com/government/). *   [Newsroom](https://www.apple.com/newsroom/).",
+      "score": 0.99128854,
+      "raw_content": null
+    }
+  ]
+}
