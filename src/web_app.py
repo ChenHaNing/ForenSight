@@ -32,6 +32,7 @@ from .pdf_loader import extract_company_name
 from .pdf_loader import (
     extract_revenue_context,
     extract_context_text,
+    score_financial_text,
     score_revenue_text,
     score_context_text,
 )
@@ -117,7 +118,7 @@ def create_app(
             else:
                 raise HTTPException(status_code=400, detail="No input texts or sample PDFs")
 
-        output_dir = BASE_DIR / "outputs" / f"run_{int(time.time())}"
+        output_dir = _new_output_dir()
         llm = llm_factory(provider, model, api_key, base_url)
         tavily_client = TavilyClient(config.tavily_api_key) if config.tavily_api_key else None
         if getattr(llm, "_responses", None) is not None:
@@ -215,7 +216,11 @@ def create_app(
 app = create_app()
 
 
-def _get_sample_pdf_paths() -> (List[str], bool):
+def _new_output_dir() -> Path:
+    return BASE_DIR / "outputs" / f"run_{time.time_ns()}_{uuid.uuid4().hex[:8]}"
+
+
+def _get_sample_pdf_paths() -> tuple[List[str], bool]:
     if SAMPLE_10K.exists():
         return [str(SAMPLE_10K)], True
     return [], False
@@ -235,16 +240,30 @@ def _run_pipeline_stream(
         financial_text = ""
         revenue_text = ""
         context_text = ""
+        financial_score = 0
+        revenue_score = 0
+        context_score = 0
         if pdf_paths:
             for path in pdf_paths:
                 chunks = extract_pdf_text_chunks(path)
                 texts.extend([c["text"] for c in chunks])
-                if not financial_text:
-                    financial_text = extract_financial_statement_text(chunks)
-                if not revenue_text:
-                    revenue_text = extract_revenue_context(chunks)
-                if not context_text:
-                    context_text = extract_context_text(chunks)
+                financial_candidate = extract_financial_statement_text(chunks)
+                financial_candidate_score = score_financial_text(financial_candidate)
+                if financial_candidate_score > financial_score:
+                    financial_text = financial_candidate
+                    financial_score = financial_candidate_score
+
+                revenue_candidate = extract_revenue_context(chunks)
+                revenue_candidate_score = score_revenue_text(revenue_candidate)
+                if revenue_candidate_score > revenue_score:
+                    revenue_text = revenue_candidate
+                    revenue_score = revenue_candidate_score
+
+                context_candidate = extract_context_text(chunks)
+                context_candidate_score = score_context_text(context_candidate)
+                if context_candidate_score > context_score:
+                    context_text = context_candidate
+                    context_score = context_candidate_score
         if input_texts:
             texts.extend(input_texts)
             if not financial_text:

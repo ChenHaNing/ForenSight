@@ -2,7 +2,7 @@ import importlib.util
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, Tuple, List
+from typing import Any, Dict, Tuple, List, Optional
 import re
 import os
 from datetime import datetime
@@ -13,6 +13,7 @@ import requests
 SKILL_CALCULATOR_PATH = Path(
     "/Users/han/.codex/skills/analyzing-financial-statements/calculate_ratios.py"
 )
+RATIO_CALCULATOR_PATH_ENV = "FINANCIAL_RATIO_CALCULATOR_PATH"
 
 
 FIN_STATEMENT_SCHEMA = {
@@ -101,14 +102,51 @@ SEC_ANNUAL_FORMS = {"10-K", "10-K/A", "20-F", "20-F/A", "40-F", "40-F/A"}
 
 
 def _load_ratio_calculator():
+    candidates: List[Path] = []
+    env_path = os.getenv(RATIO_CALCULATOR_PATH_ENV, "").strip()
+    if env_path:
+        candidates.append(Path(env_path).expanduser())
+    candidates.append(SKILL_CALCULATOR_PATH)
+
+    load_errors: List[str] = []
+    for path in candidates:
+        ratio_cls, err = _load_ratio_calculator_from_path(path)
+        if ratio_cls is not None:
+            return ratio_cls
+        if err:
+            load_errors.append(err)
+
+    try:
+        from .ratio_calculator import FinancialRatioCalculator
+
+        return FinancialRatioCalculator
+    except Exception as exc:
+        load_errors.append(f"local module: {exc}")
+
+    detail = "; ".join(load_errors) if load_errors else "no available calculator source"
+    raise RuntimeError(f"Failed to load financial ratio calculator ({detail})")
+
+
+def _load_ratio_calculator_from_path(path: Path) -> Tuple[Optional[Any], Optional[str]]:
+    if not path.exists():
+        return None, None
+
     spec = importlib.util.spec_from_file_location(
-        "financial_ratio_calculator", SKILL_CALCULATOR_PATH
+        f"financial_ratio_calculator_{abs(hash(str(path)))}", path
     )
     if spec is None or spec.loader is None:
-        raise RuntimeError("Failed to load financial ratio calculator skill")
+        return None, f"{path}: invalid import spec"
+
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module.FinancialRatioCalculator
+    try:
+        spec.loader.exec_module(module)
+    except Exception as exc:
+        return None, f"{path}: {exc}"
+
+    ratio_cls = getattr(module, "FinancialRatioCalculator", None)
+    if ratio_cls is None:
+        return None, f"{path}: missing FinancialRatioCalculator"
+    return ratio_cls, None
 
 
 def _merge_sections(base: Dict[str, Any], update: Dict[str, Any]) -> Dict[str, Any]:

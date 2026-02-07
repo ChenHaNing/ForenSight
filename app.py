@@ -1,4 +1,6 @@
 import json
+import time
+import uuid
 from pathlib import Path
 import streamlit as st
 
@@ -24,7 +26,7 @@ with st.sidebar:
     base_url = st.text_input("LLM Base URL", value=config.llm_base_url)
     enable_defense = st.checkbox("启用辩护智能体", value=True)
     st.divider()
-    use_samples = st.checkbox("使用样本文档", value=True)
+    use_samples = st.checkbox("使用样本文档", value=False)
 
 selected_files = []
 if use_samples:
@@ -49,7 +51,7 @@ if run_btn:
         st.error("请至少选择或上传一个PDF。")
     else:
         llm = LLMClient(provider=provider, model=model, api_key=api_key, base_url=base_url)
-        output_dir = PROJECT_DIR / "outputs"
+        output_dir = PROJECT_DIR / "outputs" / f"run_{time.time_ns()}_{uuid.uuid4().hex[:8]}"
         with st.spinner("正在分析，请稍候..."):
             final_report = run_pipeline(
                 input_texts=None,

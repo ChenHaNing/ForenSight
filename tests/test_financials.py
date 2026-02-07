@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from src.financials import compute_financial_metrics, extract_financials_with_fallback
 
 
@@ -297,3 +299,22 @@ def test_sec_companyfacts_values_override_inconsistent_local_units(monkeypatch):
     assert income["revenue"] == 391035000000
     assert income["net_income"] == 93736000000
     assert market["shares_outstanding"] == 14776398000
+
+
+def test_load_ratio_calculator_falls_back_to_local_module(monkeypatch):
+    from src import financials
+
+    monkeypatch.setenv("FINANCIAL_RATIO_CALCULATOR_PATH", "/tmp/not-exist-ratio-calc.py")
+    monkeypatch.setattr(financials, "SKILL_CALCULATOR_PATH", Path("/tmp/not-exist-skill-calc.py"))
+
+    ratio_cls = financials._load_ratio_calculator()
+    calculator = ratio_cls(
+        {
+            "income_statement": {"revenue": 1000, "cost_of_goods_sold": 600, "net_income": 80},
+            "balance_sheet": {"shareholders_equity": 900, "total_assets": 2000},
+            "cash_flow": {},
+            "market_data": {},
+        }
+    )
+    metrics = calculator.calculate_all_ratios()
+    assert "profitability" in metrics

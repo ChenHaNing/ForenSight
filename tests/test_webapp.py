@@ -210,3 +210,123 @@ def test_sample_pdf_paths_use_only_10k(tmp_path, monkeypatch):
 
     assert has_samples is True
     assert paths == [str(sample_10k)]
+
+
+def test_api_run_sync_uses_unique_output_dir_even_same_second(monkeypatch):
+    from src import web_app
+
+    fixed_time = 1_700_000_000.123
+    monkeypatch.setattr(web_app.time, "time", lambda: fixed_time)
+
+    def llm_factory(*_args, **_kwargs):
+        return FakeLLM(_build_fake_responses())
+
+    app = web_app.create_app(llm_factory=llm_factory)
+    client = TestClient(app)
+
+    first = client.post(
+        "/api/run?mode=sync",
+        json={"input_texts": ["sample text"], "enable_defense": True},
+    )
+    second = client.post(
+        "/api/run?mode=sync",
+        json={"input_texts": ["sample text"], "enable_defense": True},
+    )
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    first_dir = first.json()["meta"]["output_dir"]
+    second_dir = second.json()["meta"]["output_dir"]
+    assert first_dir != second_dir
+
+
+def test_run_pipeline_stream_prefers_highest_scored_financial_text(monkeypatch, tmp_path):
+    from src import web_app
+
+    captured = {}
+
+    def fake_extract_pdf_text_chunks(path):
+        return [{"text": path}]
+
+    def fake_extract_financial_statement_text(chunks):
+        text = chunks[0]["text"]
+        if "strong" in text:
+            return "Consolidated Statements of Operations\nNet income 100\nTotal assets 200"
+        return "Financial highlights"
+
+    def fake_extract_financials_with_fallback(text, llm, **_kwargs):
+        captured["text"] = text
+        return {
+            "income_statement": {},
+            "balance_sheet": {},
+            "cash_flow": {},
+            "market_data": {},
+        }
+
+    monkeypatch.setattr(web_app, "extract_pdf_text_chunks", fake_extract_pdf_text_chunks)
+    monkeypatch.setattr(web_app, "extract_financial_statement_text", fake_extract_financial_statement_text)
+    monkeypatch.setattr(web_app, "extract_financials_with_fallback", fake_extract_financials_with_fallback)
+    monkeypatch.setattr(web_app, "extract_revenue_context", lambda *_args, **_kwargs: "revenue")
+    monkeypatch.setattr(web_app, "extract_context_text", lambda *_args, **_kwargs: "context")
+    monkeypatch.setattr(web_app, "score_financial_text", lambda text: 100 if "Consolidated Statements of Operations" in text else 1, raising=False)
+    monkeypatch.setattr(web_app, "score_revenue_text", lambda *_args, **_kwargs: 1, raising=False)
+    monkeypatch.setattr(web_app, "score_context_text", lambda *_args, **_kwargs: 1, raising=False)
+    monkeypatch.setattr(web_app, "summarize_text", lambda *_args, **_kwargs: "summary")
+    monkeypatch.setattr(web_app, "extract_company_name", lambda *_args, **_kwargs: "Example Co.")
+    monkeypatch.setattr(web_app, "build_context_pack", lambda *_args, **_kwargs: {"company_name": "Example Co."})
+    monkeypatch.setattr(web_app, "build_context_capsule", lambda *_args, **_kwargs: "capsule")
+    monkeypatch.setattr(web_app, "build_workpaper_from_text", lambda *_args, **_kwargs: {"company_profile": "Example Co."})
+    monkeypatch.setattr(web_app, "apply_company_profile_hint", lambda workpaper, *_args, **_kwargs: workpaper)
+    monkeypatch.setattr(web_app, "sanitize_company_scope_fields", lambda workpaper, *_args, **_kwargs: workpaper)
+    monkeypatch.setattr(web_app, "react_enrich_workpaper", lambda workpaper, *_args, **_kwargs: workpaper)
+    monkeypatch.setattr(
+        web_app,
+        "run_agent",
+        lambda *_args, **_kwargs: {
+            "risk_level": "low",
+            "risk_points": [],
+            "evidence": [],
+            "reasoning_summary": "",
+            "suggestions": [],
+            "confidence": 0.1,
+        },
+    )
+    monkeypatch.setattr(web_app, "log_step", lambda *_args, **_kwargs: None)
+
+    run_id = "run-score-test"
+    with web_app.RUN_LOCK:
+        web_app.RUNS[run_id] = {
+            "status": "running",
+            "step_outputs": {},
+            "agent_reports": {},
+            "final_report": None,
+            "workpaper": None,
+            "meta": {},
+            "started_at": time.time(),
+            "last_update": time.time(),
+        }
+
+    llm = FakeLLM(
+        [
+            {
+                "overall_risk_level": "low",
+                "accepted_points": [],
+                "rejected_points": [],
+                "rationale": "ok",
+                "uncertainty": "low",
+                "suggestions": [],
+            }
+        ]
+    )
+
+    web_app._run_pipeline_stream(
+        run_id=run_id,
+        input_texts=None,
+        pdf_paths=["weak.pdf", "strong.pdf"],
+        llm=llm,
+        output_dir=tmp_path / "out",
+        enable_defense=False,
+        tavily_client=None,
+    )
+
+    assert "Consolidated Statements of Operations" in captured["text"]
