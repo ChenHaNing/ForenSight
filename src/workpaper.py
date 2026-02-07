@@ -111,8 +111,10 @@ def build_workpaper_from_text(
     )
 
     workpaper = llm.generate_json(system_prompt, user_prompt, WORKPAPER_SCHEMA)
-    workpaper.setdefault("financial_metrics", metrics)
-    workpaper.setdefault("metrics_notes", notes)
+    if not isinstance(workpaper.get("financial_metrics"), dict) or not workpaper.get("financial_metrics"):
+        workpaper["financial_metrics"] = metrics
+    if not isinstance(workpaper.get("metrics_notes"), list):
+        workpaper["metrics_notes"] = notes
     return workpaper
 
 

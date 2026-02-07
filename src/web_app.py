@@ -180,7 +180,15 @@ def create_app(
 
         thread = threading.Thread(
             target=_run_pipeline_stream,
-            args=(run_id, input_texts, pdf_paths, llm, output_dir, payload.enable_defense, tavily_client),
+            args=(
+                run_id,
+                input_texts,
+                pdf_paths,
+                llm,
+                output_dir,
+                payload.enable_defense,
+                tavily_client,
+            ),
             daemon=True,
         )
         thread.start()
@@ -249,15 +257,25 @@ def _run_pipeline_stream(
         combined_text = "\n".join(texts)
         summary_text = summarize_text(combined_text, llm, chunk_size=4000, max_chunks=2)
         log_step(output_dir, "summary", {"summary": summary_text})
+        _update_run(run_id, {"collect_summary": summary_text})
         company_name = extract_company_name(combined_text)
+        _update_run(run_id, {"collect_company_name": company_name or "未识别"})
         if company_name:
             log_step(output_dir, "company_profile_hint", {"company_profile": company_name})
-        financial_data = extract_financials_with_fallback(financial_text or combined_text, llm)
+        financial_data = extract_financials_with_fallback(
+            financial_text or combined_text,
+            llm,
+            enrichment_text=(financial_text or "") + "\n" + combined_text[:12000],
+            tavily_client=tavily_client,
+            company_name=company_name,
+        )
         log_step(output_dir, "financial_data", financial_data)
+        _update_run(run_id, {"collect_financial_data": financial_data})
         context_source = context_text or summary_text
         context_pack = build_context_pack(context_source, llm, company_name=company_name)
         context_capsule = build_context_capsule(context_pack)
         log_step(output_dir, "context_pack", context_pack)
+        _update_run(run_id, {"collect_context_pack": context_pack})
         workpaper = build_workpaper_from_text(
             summary_text,
             llm,

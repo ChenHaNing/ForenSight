@@ -53,6 +53,20 @@ class FakeTavily:
         return self.results
 
 
+class TraceTavily:
+    def __init__(self, results):
+        self.results = results
+        self.queries = []
+
+    @property
+    def enabled(self):
+        return True
+
+    def search(self, query, max_results=5):
+        self.queries.append(query)
+        return self.results
+
+
 def test_run_agent_includes_tavily_results_in_prompt():
     report = {
         "risk_level": "low",
@@ -192,3 +206,66 @@ def test_run_agent_filters_external_results_by_company():
     )
     run_agent("fraud_type_A", workpaper, llm, tavily_client=tavily)
     assert "Starbucks" not in llm.last_user_prompt
+
+
+def test_run_agent_prompt_contains_financial_context_for_specialized_agent():
+    report = {
+        "risk_level": "low",
+        "risk_points": [],
+        "evidence": [],
+        "reasoning_summary": "summary",
+        "suggestions": [],
+        "confidence": 0.2,
+    }
+    llm = SpyLLM(report)
+    workpaper = {
+        "company_profile": "Example Co.",
+        "fraud_type_A_block": "未提供相关识别特征。",
+        "financial_summary": "收入和利润保持增长。",
+        "financial_metrics": {"efficiency": {"inventory_turnover": 12.0}},
+        "metrics_notes": ["income_statement.revenue 未披露"],
+    }
+    run_agent("fraud_type_A", workpaper, llm)
+    assert "financial_metrics" in llm.last_user_prompt
+    assert "metrics_notes" in llm.last_user_prompt
+
+
+def test_run_agent_retry_uses_metric_gap_terms_for_queries():
+    llm = SequenceLLM(
+        [
+            {
+                "risk_level": "unknown",
+                "risk_points": [],
+                "evidence": [],
+                "reasoning_summary": "信息不足，无法评估存货减值风险。",
+                "suggestions": [],
+                "confidence": 0.1,
+            },
+            {
+                "risk_level": "low",
+                "risk_points": ["point"],
+                "evidence": ["evidence"],
+                "reasoning_summary": "summary",
+                "suggestions": [],
+                "confidence": 0.4,
+            },
+        ]
+    )
+    workpaper = {
+        "company_profile": "Apple Inc.",
+        "fraud_type_B_block": "净利润操纵线索缺失。",
+        "industry_comparables": "已披露",
+        "metrics_notes": [
+            "income_statement.cost_of_goods_sold 未披露",
+            "balance_sheet.inventory 未披露",
+        ],
+    }
+    tavily = TraceTavily(
+        [
+            {"title": "Apple inventory disclosure", "url": "https://a.example", "content": "inventory"},
+        ]
+    )
+    run_agent("fraud_type_B", workpaper, llm, tavily_client=tavily, react_retry=True, max_retries=1)
+    joined = " ".join(tavily.queries)
+    assert "存货" in joined
+    assert "成本" in joined or "cost of sales" in joined.lower()

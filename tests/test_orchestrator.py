@@ -164,7 +164,7 @@ def test_run_pipeline_prefers_stronger_financial_text(monkeypatch, tmp_path):
             }
         ]
 
-    def fake_extract_financials_with_fallback(text, llm, parallel=True, min_fields=4):
+    def fake_extract_financials_with_fallback(text, llm, parallel=True, min_fields=4, **_kwargs):
         captured["text"] = text
         return {
             "income_statement": {},

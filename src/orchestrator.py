@@ -99,7 +99,13 @@ def run_pipeline(
     company_name = extract_company_name(combined_text)
     if company_name:
         log_step(output_dir, "company_profile_hint", {"company_profile": company_name})
-    financial_data = extract_financials_with_fallback(financial_text or combined_text, llm)
+    financial_data = extract_financials_with_fallback(
+        financial_text or combined_text,
+        llm,
+        enrichment_text=(financial_text or "") + "\n" + combined_text[:12000],
+        tavily_client=tavily_client,
+        company_name=company_name,
+    )
     log_step(output_dir, "financial_data", financial_data)
     context_source = context_text or summary_text
     context_pack = build_context_pack(context_source, llm, company_name=company_name)

@@ -1,3 +1,5 @@
+import json
+import re
 from typing import Dict, Any, List
 from .workpaper import filter_external_results_by_company
 
@@ -47,6 +49,20 @@ AGENT_INPUT_FIELD = {
 }
 
 
+UNKNOWN_MARKERS = ["信息不足", "无法评估", "缺失", "未知", "未提供", "不确定"]
+METRIC_GAP_QUERY_HINTS = {
+    "income_statement.revenue": "营业收入",
+    "income_statement.cost_of_goods_sold": "成本 成本费用 成本构成",
+    "income_statement.operating_income": "营业利润 经营利润",
+    "income_statement.ebit": "息税前利润 EBIT",
+    "income_statement.interest_expense": "利息费用",
+    "income_statement.ebitda": "EBITDA 折旧摊销",
+    "balance_sheet.inventory": "存货 存货跌价 存货减值",
+    "balance_sheet.accounts_receivable": "应收账款 坏账准备",
+    "balance_sheet.total_debt": "有息负债 债务结构",
+}
+
+
 def run_agent(
     agent_name: str,
     workpaper: Dict[str, Any],
@@ -59,11 +75,7 @@ def run_agent(
         raise ValueError(f"Unknown agent: {agent_name}")
 
     system_prompt = AGENT_PROMPTS[agent_name]
-    if AGENT_INPUT_FIELD[agent_name] == "all":
-        content = workpaper
-    else:
-        key = AGENT_INPUT_FIELD[agent_name]
-        content = workpaper.get(key, "")
+    content = _build_agent_content(agent_name, workpaper)
 
     constraints = (
         "约束要求：\n"
@@ -79,7 +91,7 @@ def run_agent(
         "请基于输入内容生成结构化报告，必须引用证据并避免臆测。\n\n"
         f"{capsule_block}"
         f"{constraints}\n"
-        f"输入内容：\n{content}\n"
+        f"输入内容：\n{json.dumps(content, ensure_ascii=False)}\n"
     )
 
     external_results = _build_external_results(agent_name, workpaper, tavily_client)
@@ -100,7 +112,7 @@ def run_agent(
 
     if react_retry and _needs_react_retry(report, workpaper) and tavily_client and getattr(tavily_client, "enabled", False):
         for _ in range(max_retries):
-            retry_results = _build_react_retry_results(agent_name, workpaper, tavily_client)
+            retry_results = _build_react_retry_results(agent_name, workpaper, report, tavily_client)
             if company_name:
                 retry_results = filter_external_results_by_company(retry_results, company_name)
             retry_prompt = user_prompt
@@ -113,6 +125,23 @@ def run_agent(
             if not _needs_react_retry(report, workpaper):
                 break
     return report
+
+
+def _build_agent_content(agent_name: str, workpaper: Dict[str, Any]) -> Dict[str, Any]:
+    if AGENT_INPUT_FIELD[agent_name] == "all":
+        return workpaper
+
+    focus_key = AGENT_INPUT_FIELD[agent_name]
+    return {
+        "focus_block": workpaper.get(focus_key, ""),
+        "financial_summary": workpaper.get("financial_summary", ""),
+        "risk_disclosures": workpaper.get("risk_disclosures", ""),
+        "major_events": workpaper.get("major_events", ""),
+        "financial_metrics": workpaper.get("financial_metrics", {}),
+        "metrics_notes": workpaper.get("metrics_notes", []),
+        "context_capsule": workpaper.get("context_capsule", ""),
+        "external_search_summary": workpaper.get("external_search_summary", ""),
+    }
 
 
 def _build_external_results(agent_name: str, workpaper: Dict[str, Any], tavily_client) -> List[Dict[str, Any]]:
@@ -133,15 +162,97 @@ def _build_external_results(agent_name: str, workpaper: Dict[str, Any], tavily_c
     return tavily_client.search(query, max_results=5)
 
 
-def _build_react_retry_results(agent_name: str, workpaper: Dict[str, Any], tavily_client) -> List[Dict[str, Any]]:
+def _build_react_retry_results(
+    agent_name: str,
+    workpaper: Dict[str, Any],
+    report: Dict[str, Any],
+    tavily_client,
+) -> List[Dict[str, Any]]:
     company = workpaper.get("company_profile", "目标公司")
-    focus = "财务 数据 缺失 补充"
+    queries = _build_retry_queries(agent_name, company, workpaper, report)
+    results: List[Dict[str, Any]] = []
+    for query in queries:
+        results.extend(tavily_client.search(query, max_results=4))
+    deduped: List[Dict[str, Any]] = []
+    seen = set()
+    for item in results:
+        key = (str(item.get("url", "")), str(item.get("title", "")))
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(item)
+    return deduped[:8]
+
+
+def _build_retry_queries(
+    agent_name: str,
+    company: str,
+    workpaper: Dict[str, Any],
+    report: Dict[str, Any],
+) -> List[str]:
+    base_focus = {
+        "base": "财务舞弊 风险 信号",
+        "fraud_type_A": "收入确认 虚构交易 财务舞弊",
+        "fraud_type_B": "净利润操纵 存货减值 应计费用",
+        "fraud_type_C": "会计政策 变更 收入确认 异常",
+        "fraud_type_D": "资产减值 商誉减值 估值假设",
+        "fraud_type_E": "资金占用 关联交易 资金回流",
+        "fraud_type_F": "行业模式 风险信号",
+        "defense": "风险事项 合理解释 反证",
+    }.get(agent_name, "财务风险")
+
+    queries = [f"{company} {base_focus}"]
+
     if _is_missing_value(workpaper.get("industry_comparables")):
-        focus = "行业 对标 竞争对手"
-    elif _is_missing_value(workpaper.get("company_profile")):
-        focus = "公司简介 业务 概况"
-    query = f"{company} {focus}"
-    return tavily_client.search(query, max_results=5)
+        queries.append(f"{company} 行业 对标 竞争格局 财务指标")
+    if _is_missing_value(workpaper.get("company_profile")):
+        queries.append(f"{company} 公司简介 主营业务 业务模式")
+
+    gap_terms = _metric_gap_terms(workpaper)
+    if gap_terms:
+        queries.append(f"{company} {' '.join(gap_terms[:4])} 最新年报 10-K 20-F")
+
+    summary = str(report.get("reasoning_summary", ""))
+    if any(marker in summary for marker in UNKNOWN_MARKERS):
+        queries.append(f"{company} 年报 风险因素 管理层讨论 财务附注")
+    if re.search(r"存货|减值", summary):
+        queries.append(f"{company} 存货 跌价准备 减值测试 计提政策")
+    if re.search(r"净利润|利润操纵", summary):
+        queries.append(f"{company} 净利润 调节 应计项目 非经常性损益")
+
+    deduped = []
+    seen = set()
+    for q in queries:
+        normalized = re.sub(r"\s+", " ", q).strip()
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        deduped.append(normalized)
+    return deduped[:4]
+
+
+def _metric_gap_terms(workpaper: Dict[str, Any]) -> List[str]:
+    notes = workpaper.get("metrics_notes") or []
+    terms: List[str] = []
+    for note in notes:
+        text = str(note)
+        matched = re.search(r"([a-z_]+\.[a-z_]+)", text)
+        if not matched:
+            continue
+        key = matched.group(1)
+        hint = METRIC_GAP_QUERY_HINTS.get(key)
+        if hint:
+            terms.append(hint)
+    if not terms:
+        return []
+    deduped = []
+    seen = set()
+    for term in terms:
+        if term in seen:
+            continue
+        seen.add(term)
+        deduped.append(term)
+    return deduped
 
 
 def _format_external_results(results: List[Dict[str, Any]]) -> str:
@@ -162,8 +273,14 @@ def _needs_react_retry(report: Dict[str, Any], workpaper: Dict[str, Any]) -> boo
     if risk_level in {"unknown", "n/a"}:
         return True
     summary = str(report.get("reasoning_summary", ""))
-    for marker in ["信息不足", "无法评估", "缺失", "未知"]:
+    for marker in UNKNOWN_MARKERS:
         if marker in summary:
+            return True
+    risk_points = " ".join([str(x) for x in (report.get("risk_points") or [])])
+    evidence_text = " ".join([str(x) for x in evidence])
+    joined = f"{risk_points} {evidence_text}"
+    for marker in UNKNOWN_MARKERS:
+        if marker in joined:
             return True
     if _is_missing_value(workpaper.get("industry_comparables")):
         return True
@@ -178,7 +295,7 @@ def _is_missing_value(value: Any) -> bool:
         return True
     if len(text) < 10:
         return True
-    for marker in ["缺失", "无法评估", "信息不足", "未知"]:
+    for marker in UNKNOWN_MARKERS:
         if marker in text:
             return True
     return False

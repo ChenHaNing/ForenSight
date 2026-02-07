@@ -1,10 +1,12 @@
+import time
+
 from fastapi.testclient import TestClient
 
 from src.llm_client import FakeLLM
 
 
-def test_api_run_returns_report_payload():
-    responses = [
+def _build_fake_responses():
+    return [
         {"summary": "summary"},
         {
             "income_statement": {"revenue": 1000, "cost_of_goods_sold": 600, "net_income": 80},
@@ -122,7 +124,10 @@ def test_api_run_returns_report_payload():
             "suggestions": ["finalSuggestion"],
         },
     ]
-    llm = FakeLLM(responses)
+
+
+def test_api_run_returns_report_payload():
+    llm = FakeLLM(_build_fake_responses())
 
     from src.web_app import create_app
 
@@ -154,6 +159,43 @@ def test_api_run_returns_report_payload():
     assert "defense" in payload["step_outputs"]
     assert "final" in payload["step_outputs"]
     assert payload["step_outputs"]["workpaper"]["company_profile"] == "Example Co."
+
+
+def test_api_run_async_eventually_completes():
+    from src import web_app
+
+    with web_app.RUN_LOCK:
+        web_app.RUNS.clear()
+
+    llm = FakeLLM(_build_fake_responses())
+    app = web_app.create_app(llm_factory=lambda *_args, **_kwargs: llm)
+    client = TestClient(app)
+
+    start_resp = client.post(
+        "/api/run",
+        json={
+            "input_texts": ["sample text"],
+            "enable_defense": True,
+        },
+    )
+    assert start_resp.status_code == 200
+    run_id = start_resp.json().get("run_id")
+    assert run_id
+
+    deadline = time.time() + 5
+    last_payload = None
+    while time.time() < deadline:
+        status_resp = client.get("/api/status", params={"run_id": run_id})
+        assert status_resp.status_code == 200
+        last_payload = status_resp.json()
+        if last_payload.get("status") in {"completed", "failed"}:
+            break
+        time.sleep(0.05)
+
+    assert last_payload is not None
+    assert last_payload.get("status") == "completed", last_payload.get("error")
+    assert last_payload.get("final_report", {}).get("overall_risk_level") == "medium"
+    assert "final" in last_payload.get("step_outputs", {})
 
 
 def test_sample_pdf_paths_use_only_10k(tmp_path, monkeypatch):

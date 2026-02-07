@@ -75,86 +75,114 @@
         </div>
       </section>
 
-      <section class="grid">
-        <div class="card timeline">
-          <h3>推理流程</h3>
-          <ul id="timeline">
-            <li data-step="collect">信息汇聚与结构化底稿</li>
-            <li data-step="base">基础风险识别</li>
-            <li data-step="agents">指向型舞弊智能体</li>
-            <li data-step="defense">辩护分析智能体</li>
-            <li data-step="judge">裁决智能体输出</li>
+      <section class="workflow-grid">
+        <div class="card workflow-canvas">
+          <div class="workflow-head">
+            <h3>Agent 工作流画布</h3>
+            <p>按「汇聚 -> 识别 -> 指控 -> 辩护 -> 裁决」顺序流式传导</p>
+          </div>
+          <ul id="timeline" class="wf-steps">
+            <li class="wf-node" data-step="collect">
+              <span class="node-title">信息汇聚与结构化底稿</span>
+              <span class="node-meta" id="node-meta-collect">等待中</span>
+            </li>
+            <li class="wf-node" data-step="base">
+              <span class="node-title">基础风险识别</span>
+              <span class="node-meta" id="node-meta-base">等待中</span>
+            </li>
+            <li class="wf-node" data-step="agents">
+              <span class="node-title">指向型舞弊智能体</span>
+              <span class="node-meta" id="node-meta-agents">等待中</span>
+            </li>
+            <li class="wf-node" data-step="defense">
+              <span class="node-title">辩护分析智能体</span>
+              <span class="node-meta" id="node-meta-defense">等待中</span>
+            </li>
+            <li class="wf-node" data-step="judge">
+              <span class="node-title">裁决智能体输出</span>
+              <span class="node-meta" id="node-meta-judge">等待中</span>
+            </li>
           </ul>
+          <div class="trace-bar" id="trace-bar">
+            <span class="trace-segment" data-step="collect"></span>
+            <span class="trace-segment" data-step="base"></span>
+            <span class="trace-segment" data-step="agents"></span>
+            <span class="trace-segment" data-step="defense"></span>
+            <span class="trace-segment" data-step="judge"></span>
+          </div>
         </div>
-        <div class="card step-output">
+
+        <div class="card step-output workflow-output">
           <h3>步骤输出</h3>
           <div id="step-outputs" class="step-outputs">
-            <details open>
+            <details open data-step="collect">
               <summary>信息汇聚与结构化底稿</summary>
+              <div class="step-body" id="collect-output">—</div>
               <div class="step-body" id="workpaper-output">—</div>
             </details>
-            <details>
+            <details data-step="base">
               <summary>基础风险识别</summary>
               <div class="step-body" id="base-output">—</div>
             </details>
-            <details>
+            <details data-step="agents">
               <summary>指向型舞弊智能体</summary>
               <div class="step-body" id="agent-output">—</div>
             </details>
-            <details>
+            <details data-step="defense">
               <summary>辩护分析智能体</summary>
               <div class="step-body" id="defense-output">—</div>
             </details>
-            <details>
+            <details data-step="judge">
               <summary>裁决智能体输出</summary>
               <div class="step-body" id="final-output">—</div>
             </details>
           </div>
         </div>
-        <div class="card arena">
+
+        <div class="card arena workflow-arena">
           <h3>多智能体对抗棋盘</h3>
           <div class="agents" id="agents">
-            <div class="agent" data-agent="base">
+            <div class="agent" data-agent="base" data-step-group="base">
               <h4>基础风险智能体</h4>
               <p class="status">等待中</p>
               <div class="body"></div>
             </div>
-            <div class="agent" data-agent="fraud_type_A">
+            <div class="agent" data-agent="fraud_type_A" data-step-group="agents">
               <h4>虚构交易类收入舞弊</h4>
               <p class="status">等待中</p>
               <div class="body"></div>
             </div>
-            <div class="agent" data-agent="fraud_type_B">
+            <div class="agent" data-agent="fraud_type_B" data-step-group="agents">
               <h4>净利润操纵舞弊</h4>
               <p class="status">等待中</p>
               <div class="body"></div>
             </div>
-            <div class="agent" data-agent="fraud_type_C">
+            <div class="agent" data-agent="fraud_type_C" data-step-group="agents">
               <h4>会计操纵收入舞弊</h4>
               <p class="status">等待中</p>
               <div class="body"></div>
             </div>
-            <div class="agent" data-agent="fraud_type_D">
+            <div class="agent" data-agent="fraud_type_D" data-step-group="agents">
               <h4>净资产舞弊</h4>
               <p class="status">等待中</p>
               <div class="body"></div>
             </div>
-            <div class="agent" data-agent="fraud_type_E">
+            <div class="agent" data-agent="fraud_type_E" data-step-group="agents">
               <h4>资金占用舞弊</h4>
               <p class="status">等待中</p>
               <div class="body"></div>
             </div>
-            <div class="agent" data-agent="fraud_type_F">
+            <div class="agent" data-agent="fraud_type_F" data-step-group="agents">
               <h4>特殊行业/业务模式</h4>
               <p class="status">等待中</p>
               <div class="body"></div>
             </div>
-            <div class="agent" data-agent="defense">
+            <div class="agent" data-agent="defense" data-step-group="defense">
               <h4>辩护分析智能体</h4>
               <p class="status">等待中</p>
               <div class="body"></div>
             </div>
-            <div class="agent highlight" data-agent="judge">
+            <div class="agent highlight" data-agent="judge" data-step-group="judge">
               <h4>裁决智能体</h4>
               <p class="status">等待中</p>
               <div class="body"></div>

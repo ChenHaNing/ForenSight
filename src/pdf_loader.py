@@ -50,6 +50,12 @@ FINANCIAL_KEYWORDS = [
     "Shareholders' equity",
     "Gross margin",
     "Operating income",
+    "Operating activities",
+    "Investing activities",
+    "Financing activities",
+    "Cash used in financing activities",
+    "Depreciation and amortization",
+    "Term debt",
 ]
 
 
@@ -78,22 +84,45 @@ CONTEXT_KEYWORDS = [
 ]
 
 
-def extract_financial_statement_text(chunks: List[Dict[str, str]], max_chars: int = 6000) -> str:
+def extract_financial_statement_text(chunks: List[Dict[str, str]], max_chars: int = 16000) -> str:
     scored = []
-    for chunk in chunks:
+    for idx, chunk in enumerate(chunks):
         text = chunk.get("text", "")
         score = _score_financial_chunk(text)
         if score > 0:
-            scored.append((score, text))
+            chunk_idx = int(chunk.get("chunk_index", idx))
+            scored.append((score, chunk_idx, text))
     scored.sort(key=lambda x: x[0], reverse=True)
+
+    priority_keywords = [
+        "financing activities",
+        "cash used in financing activities",
+        "cash provided by financing activities",
+        "ending balances",
+        "total shareholders",
+        "term debt",
+    ]
+    priority = [
+        (score, chunk_idx, text)
+        for score, chunk_idx, text in scored
+        if any(keyword in text.lower() for keyword in priority_keywords)
+    ]
+
+    # Prioritize chunks with key summary lines, then backfill with high-score chunks.
+    ordered = priority + scored
+    seen = set()
     selected = []
     total = 0
-    for _, text in scored[:20]:
+    for _, chunk_idx, text in ordered:
         if total >= max_chars:
             break
-        selected.append(text)
+        if chunk_idx in seen:
+            continue
+        seen.add(chunk_idx)
+        selected.append((chunk_idx, text))
         total += len(text)
-    return "\n".join(selected)
+    selected.sort(key=lambda x: x[0])
+    return "\n".join(text for _, text in selected)
 
 
 def extract_revenue_context(chunks: List[Dict[str, str]], max_chars: int = 6000) -> str:

@@ -262,3 +262,41 @@ def test_build_context_capsule_contains_company_name():
     }
     capsule = build_context_capsule(pack)
     assert "APPLE INC." in capsule
+
+
+def test_build_workpaper_replaces_null_metrics_with_computed_values():
+    fake_response = {
+        "company_profile": "Example Co.",
+        "financial_summary": "Summary",
+        "risk_disclosures": "Risks",
+        "major_events": "Events",
+        "governance_signals": "Governance",
+        "industry_comparables": "Peers",
+        "announcements_summary": "Announcements",
+        "related_parties_summary": "Related parties",
+        "industry_benchmark_summary": "Benchmark",
+        "external_search_summary": "External summary",
+        "financial_metrics": None,
+        "metrics_notes": None,
+        "fraud_type_A_block": "A-block",
+        "fraud_type_B_block": "B-block",
+        "fraud_type_C_block": "C-block",
+        "fraud_type_D_block": "D-block",
+        "fraud_type_E_block": "E-block",
+        "fraud_type_F_block": "F-block",
+        "evidence": [{"quote": "Sample", "source": "p1"}],
+    }
+    llm = FakeLLM([fake_response])
+    workpaper = build_workpaper_from_text(
+        "sample text",
+        llm,
+        financial_data={
+            "income_statement": {"revenue": 1000, "cost_of_goods_sold": 600},
+            "balance_sheet": {"total_assets": 2000, "shareholders_equity": 900},
+            "cash_flow": {},
+            "market_data": {},
+        },
+    )
+    assert isinstance(workpaper["financial_metrics"], dict)
+    assert workpaper["financial_metrics"]["profitability"]["gross_margin"] == 0.4
+    assert isinstance(workpaper["metrics_notes"], list)

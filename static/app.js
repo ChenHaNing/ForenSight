@@ -15,28 +15,168 @@ const uncertaintyEl = document.getElementById('uncertainty');
 const evidenceListEl = document.getElementById('evidence-list');
 const externalSearchEl = document.getElementById('external-search');
 const workpaperOutputEl = document.getElementById('workpaper-output');
+const collectOutputEl = document.getElementById('collect-output');
 const baseOutputEl = document.getElementById('base-output');
 const agentOutputEl = document.getElementById('agent-output');
 const defenseOutputEl = document.getElementById('defense-output');
 const finalOutputEl = document.getElementById('final-output');
+const stepPanels = document.querySelectorAll('#step-outputs details');
+const traceSegments = document.querySelectorAll('#trace-bar .trace-segment');
+const nodeMetaEls = {
+  collect: document.getElementById('node-meta-collect'),
+  base: document.getElementById('node-meta-base'),
+  agents: document.getElementById('node-meta-agents'),
+  defense: document.getElementById('node-meta-defense'),
+  judge: document.getElementById('node-meta-judge'),
+};
 
 const steps = ['collect', 'base', 'agents', 'defense', 'judge'];
+const FRAUD_AGENTS = [
+  { key: 'fraud_type_A', title: '虚构交易类收入舞弊' },
+  { key: 'fraud_type_B', title: '净利润操纵舞弊' },
+  { key: 'fraud_type_C', title: '会计操纵收入舞弊' },
+  { key: 'fraud_type_D', title: '净资产舞弊' },
+  { key: 'fraud_type_E', title: '资金占用舞弊' },
+  { key: 'fraud_type_F', title: '特殊行业/业务模式' },
+];
+const renderCache = new Map();
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function formatCell(value) {
+  if (value === null || value === undefined) {
+    return '<span class="table-empty">—</span>';
+  }
+  if (Array.isArray(value)) {
+    if (value.length === 0) return '<span class="table-empty">—</span>';
+    return `<ul class="table-list">${value.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
+  }
+  if (typeof value === 'object') {
+    return `<pre class="table-pre">${escapeHtml(JSON.stringify(value, null, 2))}</pre>`;
+  }
+  const text = String(value).trim();
+  if (!text) return '<span class="table-empty">—</span>';
+  return escapeHtml(text).replaceAll('\n', '<br/>');
+}
+
+function buildTable(headers, rows) {
+  const thead = `<thead><tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join('')}</tr></thead>`;
+  const tbody = `<tbody>${rows
+    .map((row) => `<tr>${row.map((value) => `<td>${formatCell(value)}</td>`).join('')}</tr>`)
+    .join('')}</tbody>`;
+  return `<div class="table-wrap"><table class="data-table">${thead}${tbody}</table></div>`;
+}
 
 function setStatus(text, colorClass = 'success') {
   statusPill.textContent = text;
   statusPill.style.color = colorClass === 'danger' ? '#ef4444' : '#22c55e';
 }
 
+function setHTMLIfChanged(element, html, cacheKey) {
+  if (!element) return false;
+  const prev = renderCache.get(cacheKey);
+  if (prev === html) return false;
+
+  const prevWrap = element.querySelector('.table-wrap');
+  const prevScrollTop = prevWrap ? prevWrap.scrollTop : 0;
+  const prevScrollLeft = prevWrap ? prevWrap.scrollLeft : 0;
+
+  element.innerHTML = html;
+  renderCache.set(cacheKey, html);
+
+  const nextWrap = element.querySelector('.table-wrap');
+  if (nextWrap) {
+    nextWrap.scrollTop = prevScrollTop;
+    nextWrap.scrollLeft = prevScrollLeft;
+  }
+  return true;
+}
+
+function flashUpdate(element) {
+  if (!element) return;
+  element.classList.remove('stream-update');
+  // Force reflow to replay animation.
+  void element.offsetWidth;
+  element.classList.add('stream-update');
+}
+
+function setNodeMeta(step, text) {
+  const el = nodeMetaEls[step];
+  if (el) el.textContent = text;
+}
+
+function setTraceState(step, state) {
+  const segment = document.querySelector(`#trace-bar .trace-segment[data-step="${step}"]`);
+  if (!segment) return;
+  segment.classList.remove('active', 'complete');
+  if (state) {
+    segment.classList.add(state);
+  }
+}
+
 function resetTimeline() {
   timeline.querySelectorAll('li').forEach((item) => {
     item.classList.remove('active', 'complete');
   });
+  stepPanels.forEach((panel) => {
+    panel.classList.remove('active', 'complete');
+  });
+  traceSegments.forEach((segment) => {
+    segment.classList.remove('active', 'complete');
+  });
+  Object.keys(nodeMetaEls).forEach((step) => setNodeMeta(step, '等待中'));
+  agentContainer.querySelectorAll('.agent').forEach((card) => {
+    card.classList.remove('step-active');
+  });
 }
 
 function activateStep(step) {
+  if (document.body.dataset.activeStep === step) {
+    setNodeMeta(step, '运行中');
+    setTraceState(step, 'active');
+    return;
+  }
+
+  timeline.querySelectorAll('li.active').forEach((item) => {
+    if (item.dataset.step !== step) item.classList.remove('active');
+  });
+  stepPanels.forEach((panel) => {
+    if (panel.dataset.step !== step) panel.classList.remove('active');
+  });
+  traceSegments.forEach((segment) => {
+    if (segment.dataset.step !== step && !segment.classList.contains('complete')) {
+      segment.classList.remove('active');
+    }
+  });
+
   const item = timeline.querySelector(`li[data-step="${step}"]`);
   if (item) {
     item.classList.add('active');
+  }
+  const panel = document.querySelector(`#step-outputs details[data-step="${step}"]`);
+  if (panel) {
+    panel.classList.add('active');
+    if (!panel.open) panel.open = true;
+  }
+  setNodeMeta(step, '运行中');
+  setTraceState(step, 'active');
+  document.body.dataset.activeStep = step;
+
+  agentContainer.querySelectorAll('.agent').forEach((card) => {
+    card.classList.remove('step-active');
+  });
+  const currentGroup = step === 'collect' ? null : step;
+  if (currentGroup) {
+    agentContainer.querySelectorAll(`.agent[data-step-group="${currentGroup}"]`).forEach((card) => {
+      card.classList.add('step-active');
+    });
   }
 }
 
@@ -45,6 +185,16 @@ function completeStep(step) {
   if (item) {
     item.classList.remove('active');
     item.classList.add('complete');
+  }
+  const panel = document.querySelector(`#step-outputs details[data-step="${step}"]`);
+  if (panel) {
+    panel.classList.remove('active');
+    panel.classList.add('complete');
+  }
+  setNodeMeta(step, '已完成');
+  setTraceState(step, 'complete');
+  if (document.body.dataset.activeStep === step) {
+    delete document.body.dataset.activeStep;
   }
 }
 
@@ -55,6 +205,7 @@ function updateAgentCard(name, report) {
   const body = card.querySelector('.body');
   const points = (report.risk_points || []).slice(0, 3);
   body.innerHTML = points.map((p) => `<div>• ${p}</div>`).join('') || '—';
+  flashUpdate(card);
 }
 
 function updateJudge(report) {
@@ -63,6 +214,7 @@ function updateJudge(report) {
   card.querySelector('.status').textContent = `最终等级：${report.overall_risk_level}`;
   const body = card.querySelector('.body');
   body.innerHTML = report.rationale ? `<div>${report.rationale}</div>` : '—';
+  flashUpdate(card);
 }
 
 function fillList(container, items) {
@@ -79,34 +231,36 @@ function fillList(container, items) {
 }
 
 function fillEvidence(evidence) {
-  evidenceListEl.innerHTML = '';
   if (!evidence || evidence.length === 0) {
-    evidenceListEl.innerHTML = '<div class="muted">暂无证据片段</div>';
+    const changed = setHTMLIfChanged(evidenceListEl, '<div class="muted">暂无证据片段</div>', 'evidence:empty');
+    if (changed) flashUpdate(evidenceListEl);
     return;
   }
-  evidence.slice(0, 8).forEach((item) => {
-    const div = document.createElement('div');
-    div.className = 'evidence-item';
-    div.innerHTML = `<div>${item.quote}</div><div class="muted">来源：${item.source}</div>`;
-    evidenceListEl.appendChild(div);
-  });
+  const rows = evidence.slice(0, 12).map((item, index) => [index + 1, item.quote || '—', item.source || '—']);
+  const html = buildTable(['序号', '证据片段', '来源'], rows);
+  const changed = setHTMLIfChanged(evidenceListEl, html, 'evidence:data');
+  if (changed) flashUpdate(evidenceListEl);
 }
 
 function fillExternalSearch(results) {
-  externalSearchEl.innerHTML = '';
   if (!results || results.length === 0) {
-    externalSearchEl.innerHTML = '<div class="muted">暂无外部检索结果</div>';
+    const changed = setHTMLIfChanged(
+      externalSearchEl,
+      '<div class="muted">暂无外部检索结果</div>',
+      'external:empty',
+    );
+    if (changed) flashUpdate(externalSearchEl);
     return;
   }
-  results.slice(0, 8).forEach((item) => {
-    const div = document.createElement('div');
-    div.className = 'evidence-item';
-    const title = item.title || '未命名';
-    const snippet = item.content || '';
-    const url = item.url || '';
-    div.innerHTML = `<div><strong>${title}</strong></div><div>${snippet}</div><div class="muted">${url}</div>`;
-    externalSearchEl.appendChild(div);
-  });
+  const rows = results.slice(0, 12).map((item, index) => [
+    index + 1,
+    item.title || '未命名',
+    item.content || '—',
+    item.url || '—',
+  ]);
+  const html = buildTable(['序号', '标题', '摘要', '链接'], rows);
+  const changed = setHTMLIfChanged(externalSearchEl, html, 'external:data');
+  if (changed) flashUpdate(externalSearchEl);
 }
 
 function enableDownloads(finalReport, workpaper) {
@@ -136,7 +290,8 @@ function enableDownloads(finalReport, workpaper) {
 
 function renderWorkpaper(workpaper) {
   if (!workpaper) {
-    workpaperOutputEl.textContent = '—';
+    const changed = setHTMLIfChanged(workpaperOutputEl, '—', 'workpaper:empty');
+    if (changed) flashUpdate(workpaperOutputEl);
     return;
   }
   const sections = [
@@ -150,15 +305,8 @@ function renderWorkpaper(workpaper) {
     ['关联方/客户供应商摘要', workpaper.related_parties_summary],
     ['行业对标摘要', workpaper.industry_benchmark_summary],
     ['外部检索摘要', workpaper.external_search_summary],
-    [
-      '财务指标',
-      workpaper.financial_metrics
-        ? Object.entries(workpaper.financial_metrics)
-            .map(([k, v]) => `${k}: ${JSON.stringify(v)}`)
-            .join('<br/>')
-        : '—',
-    ],
-    ['指标缺失说明', (workpaper.metrics_notes || []).join('; ') || '—'],
+    ['财务指标', workpaper.financial_metrics || '—'],
+    ['指标缺失说明', workpaper.metrics_notes || []],
     ['虚构交易类线索', workpaper.fraud_type_A_block],
     ['净利润操纵线索', workpaper.fraud_type_B_block],
     ['会计操纵收入线索', workpaper.fraud_type_C_block],
@@ -166,61 +314,99 @@ function renderWorkpaper(workpaper) {
     ['资金占用线索', workpaper.fraud_type_E_block],
     ['特殊行业/业务模式线索', workpaper.fraud_type_F_block],
   ];
-  workpaperOutputEl.innerHTML = sections
-    .map(([title, value]) => `<div><strong>${title}</strong><div>${value || '—'}</div></div>`)
-    .join('');
+  const html = buildTable(['字段', '内容'], sections);
+  const changed = setHTMLIfChanged(workpaperOutputEl, html, 'workpaper:data');
+  if (changed) flashUpdate(workpaperOutputEl);
+}
+
+function renderCollectBreakdown(stepsData) {
+  const rowStatus = (value, fallback = '处理中') => (value ? '已完成' : fallback);
+  const rows = [
+    ['文档解析与摘要', rowStatus(stepsData.collect_summary), stepsData.collect_summary || '等待抽取'],
+    ['财务数据抽取', rowStatus(stepsData.collect_financial_data), stepsData.collect_financial_data || '等待抽取'],
+    ['上下文构建', rowStatus(stepsData.collect_context_pack), stepsData.collect_context_pack || '等待构建'],
+    ['公司主体识别', rowStatus(stepsData.collect_company_name, '等待识别'), stepsData.collect_company_name || '待识别'],
+  ];
+  const html = buildTable(['子步骤', '状态', '当前输出'], rows);
+  const changed = setHTMLIfChanged(collectOutputEl, html, 'collect:data');
+  if (changed) flashUpdate(collectOutputEl);
+}
+
+function renderFraudAgentsOutput(stepsData) {
+  const rows = FRAUD_AGENTS.map(({ key, title }) => {
+    const report = stepsData[key];
+    if (!report) {
+      return [title, '处理中', '—', '—', '等待智能体返回'];
+    }
+    return [
+      title,
+      '已完成',
+      report.risk_level || '—',
+      report.confidence ?? '—',
+      report.risk_points || [],
+    ];
+  });
+  return buildTable(['智能体', '状态', '风险等级', '置信度', '关键风险点'], rows);
 }
 
 function buildAgentHtml(title, report) {
   if (!report) {
-    return `<div><strong>${title}</strong><div>—</div></div>`;
+    return buildTable(['字段', '内容'], [[title, '—']]);
   }
-  const points = (report.risk_points || []).slice(0, 4).map((p) => `<li>${p}</li>`).join('');
-  return `
-    <div>
-      <strong>${title}</strong>
-      <div class="muted">风险等级：${report.risk_level || '—'}</div>
-      <div><strong>关键风险点</strong><ul>${points || '<li>—</li>'}</ul></div>
-      <div><strong>摘要</strong>：${report.reasoning_summary || '—'}</div>
-    </div>
-  `;
+  const rows = [
+    ['智能体', title],
+    ['风险等级', report.risk_level || '—'],
+    ['置信度', report.confidence ?? '—'],
+    ['关键风险点', report.risk_points || []],
+    ['关键证据', report.evidence || []],
+    ['摘要', report.reasoning_summary || '—'],
+  ];
+  return buildTable(['字段', '内容'], rows);
 }
 
 function renderFinalReport(targetEl, report) {
   if (!report) {
-    targetEl.textContent = '—';
+    const changed = setHTMLIfChanged(targetEl, '—', 'final:empty');
+    if (changed) flashUpdate(targetEl);
     return;
   }
-  const accepted = (report.accepted_points || []).slice(0, 3).map((p) => `<li>${p}</li>`).join('');
-  const rejected = (report.rejected_points || []).slice(0, 3).map((p) => `<li>${p}</li>`).join('');
-  targetEl.innerHTML = `
-    <div><strong>总体风险</strong>：${report.overall_risk_level || '—'}</div>
-    <div><strong>采纳点</strong><ul>${accepted || '<li>—</li>'}</ul></div>
-    <div><strong>驳回点</strong><ul>${rejected || '<li>—</li>'}</ul></div>
-    <div><strong>裁决依据</strong>：${report.rationale || '—'}</div>
-  `;
+  const rows = [
+    ['总体风险', report.overall_risk_level || '—'],
+    ['采纳点', report.accepted_points || []],
+    ['驳回点', report.rejected_points || []],
+    ['裁决依据', report.rationale || '—'],
+  ];
+  const html = buildTable(['字段', '内容'], rows);
+  const changed = setHTMLIfChanged(targetEl, html, 'final:data');
+  if (changed) flashUpdate(targetEl);
 }
 
 function resetOutputs() {
+  renderCache.clear();
   riskLevelEl.textContent = '—';
   fillList(acceptedPointsEl, []);
   fillList(rejectedPointsEl, []);
   fillList(suggestionsEl, []);
   rationaleEl.textContent = '—';
   uncertaintyEl.textContent = '—';
-  evidenceListEl.innerHTML = '';
-  externalSearchEl.innerHTML = '';
-  workpaperOutputEl.textContent = '—';
-  baseOutputEl.textContent = '—';
-  agentOutputEl.textContent = '—';
-  defenseOutputEl.textContent = '—';
-  finalOutputEl.textContent = '—';
+  setHTMLIfChanged(evidenceListEl, '', 'evidence:data');
+  setHTMLIfChanged(externalSearchEl, '', 'external:data');
+  setHTMLIfChanged(collectOutputEl, '—', 'collect:empty');
+  setHTMLIfChanged(workpaperOutputEl, '—', 'workpaper:empty');
+  setHTMLIfChanged(baseOutputEl, '—', 'base:empty');
+  setHTMLIfChanged(agentOutputEl, '—', 'agents:empty');
+  setHTMLIfChanged(defenseOutputEl, '—', 'defense:empty');
+  setHTMLIfChanged(finalOutputEl, '—', 'final:empty');
   agentContainer.querySelectorAll('.agent .status').forEach((el) => {
     el.textContent = '等待中';
   });
   agentContainer.querySelectorAll('.agent .body').forEach((el) => {
     el.textContent = '';
   });
+  agentContainer.querySelectorAll('.agent').forEach((card) => {
+    card.classList.remove('step-active');
+  });
+  delete document.body.dataset.activeStep;
 }
 
 async function runAnalysis() {
@@ -237,6 +423,11 @@ async function runAnalysis() {
   };
 
   activateStep(steps[0]);
+  if (!payload.enable_defense) {
+    const disabledDefenseHtml = buildTable(['字段', '内容'], [['辩护智能体', '已禁用']]);
+    const changed = setHTMLIfChanged(defenseOutputEl, disabledDefenseHtml, 'defense:disabled');
+    if (changed) flashUpdate(defenseOutputEl);
+  }
 
   try {
     const resp = await fetch('/api/run?mode=async', {
@@ -265,46 +456,65 @@ async function runAnalysis() {
       }
       const data = await statusResp.json();
       const stepsData = data.step_outputs || {};
+      renderCollectBreakdown(stepsData);
+      const collectDone = Boolean(stepsData.workpaper);
+      if (!collectDone) {
+        activateStep('collect');
+      }
 
-      if (stepsData.workpaper) {
+      if (collectDone) {
         completeStep('collect');
         renderWorkpaper(stepsData.workpaper);
       }
       if (stepsData.base) {
+        activateStep('base');
         completeStep('base');
-        baseOutputEl.innerHTML = buildAgentHtml('基础风险智能体', stepsData.base);
+        const baseHtml = buildAgentHtml('基础风险智能体', stepsData.base);
+        const changed = setHTMLIfChanged(baseOutputEl, baseHtml, 'base:data');
+        if (changed) flashUpdate(baseOutputEl);
         updateAgentCard('base', stepsData.base);
+      } else if (collectDone) {
+        activateStep('base');
       }
-      if (
-        stepsData.fraud_type_A ||
-        stepsData.fraud_type_B ||
-        stepsData.fraud_type_C ||
-        stepsData.fraud_type_D ||
-        stepsData.fraud_type_E ||
-        stepsData.fraud_type_F
-      ) {
+
+      const doneFraudAgents = FRAUD_AGENTS.filter(({ key }) => Boolean(stepsData[key])).length;
+      if (doneFraudAgents > 0 || stepsData.base) {
+        activateStep('agents');
+      }
+      if (stepsData.base) {
+        const agentsHtml = renderFraudAgentsOutput(stepsData);
+        const changed = setHTMLIfChanged(agentOutputEl, agentsHtml, 'agents:data');
+        if (changed) flashUpdate(agentOutputEl);
+      }
+      if (doneFraudAgents === FRAUD_AGENTS.length) {
         completeStep('agents');
-        agentOutputEl.innerHTML = [
-          buildAgentHtml('虚构交易类收入舞弊', stepsData.fraud_type_A),
-          buildAgentHtml('净利润操纵舞弊', stepsData.fraud_type_B),
-          buildAgentHtml('会计操纵收入舞弊', stepsData.fraud_type_C),
-          buildAgentHtml('净资产舞弊', stepsData.fraud_type_D),
-          buildAgentHtml('资金占用舞弊', stepsData.fraud_type_E),
-          buildAgentHtml('特殊行业/业务模式', stepsData.fraud_type_F),
-        ].join('');
-        if (stepsData.fraud_type_A) updateAgentCard('fraud_type_A', stepsData.fraud_type_A);
-        if (stepsData.fraud_type_B) updateAgentCard('fraud_type_B', stepsData.fraud_type_B);
-        if (stepsData.fraud_type_C) updateAgentCard('fraud_type_C', stepsData.fraud_type_C);
-        if (stepsData.fraud_type_D) updateAgentCard('fraud_type_D', stepsData.fraud_type_D);
-        if (stepsData.fraud_type_E) updateAgentCard('fraud_type_E', stepsData.fraud_type_E);
-        if (stepsData.fraud_type_F) updateAgentCard('fraud_type_F', stepsData.fraud_type_F);
+      }
+      if (stepsData.fraud_type_A) updateAgentCard('fraud_type_A', stepsData.fraud_type_A);
+      if (stepsData.fraud_type_B) updateAgentCard('fraud_type_B', stepsData.fraud_type_B);
+      if (stepsData.fraud_type_C) updateAgentCard('fraud_type_C', stepsData.fraud_type_C);
+      if (stepsData.fraud_type_D) updateAgentCard('fraud_type_D', stepsData.fraud_type_D);
+      if (stepsData.fraud_type_E) updateAgentCard('fraud_type_E', stepsData.fraud_type_E);
+      if (stepsData.fraud_type_F) updateAgentCard('fraud_type_F', stepsData.fraud_type_F);
+
+      if (!payload.enable_defense && doneFraudAgents === FRAUD_AGENTS.length) {
+        completeStep('defense');
+      }
+      if (payload.enable_defense && doneFraudAgents === FRAUD_AGENTS.length && !stepsData.defense) {
+        activateStep('defense');
       }
       if (stepsData.defense) {
+        activateStep('defense');
         completeStep('defense');
-        defenseOutputEl.innerHTML = buildAgentHtml('辩护分析智能体', stepsData.defense);
+        const defenseHtml = buildAgentHtml('辩护分析智能体', stepsData.defense);
+        const changed = setHTMLIfChanged(defenseOutputEl, defenseHtml, 'defense:data');
+        if (changed) flashUpdate(defenseOutputEl);
         updateAgentCard('defense', stepsData.defense);
       }
+      if ((stepsData.defense || !payload.enable_defense) && !stepsData.final) {
+        activateStep('judge');
+      }
       if (stepsData.final) {
+        activateStep('judge');
         completeStep('judge');
         renderFinalReport(finalOutputEl, stepsData.final);
         updateJudge(stepsData.final);
