@@ -1,6 +1,6 @@
 import json
 from src.orchestrator import run_pipeline
-from src.llm_client import FakeLLM
+from tests.helpers.fake_llm import FakeLLM
 
 
 def test_run_pipeline_writes_outputs(tmp_path):

@@ -7,7 +7,7 @@ from src.workpaper import (
     filter_external_results_by_company,
     sanitize_company_scope_fields,
 )
-from src.llm_client import FakeLLM
+from tests.helpers.fake_llm import FakeLLM
 
 
 def test_build_workpaper_from_text_returns_required_fields():
@@ -215,21 +215,33 @@ class FakeTavily:
 
 
 def test_react_enrich_workpaper_fills_missing_fields():
-    class SimpleLLM:
-        def __init__(self, response):
-            self.response = response
+    class PlanFillLLM:
+        def __init__(self):
+            self.calls = 0
 
         def generate_json(self, system_prompt, user_prompt, schema=None, temperature=0.2):
-            return self.response
+            self.calls += 1
+            if self.calls == 1:
+                return {
+                    "need_autonomous_research": True,
+                    "minimum_rounds": 1,
+                    "target_fields": [
+                        "company_profile",
+                        "industry_comparables",
+                        "industry_benchmark_summary",
+                        "external_search_summary",
+                    ],
+                    "follow_up_queries": ["Example Co. annual report peer benchmark disclosure"],
+                    "reason": "missing core context fields",
+                }
+            return {
+                "company_profile": "Example Co.",
+                "industry_comparables": "Peer A, Peer B",
+                "industry_benchmark_summary": "Benchmark info",
+                "external_search_summary": "External info",
+            }
 
-    llm = SimpleLLM(
-        {
-            "company_profile": "Example Co.",
-            "industry_comparables": "Peer A, Peer B",
-            "industry_benchmark_summary": "Benchmark info",
-            "external_search_summary": "External info",
-        }
-    )
+    llm = PlanFillLLM()
     workpaper = {
         "company_profile": "",
         "industry_comparables": "",
@@ -241,7 +253,7 @@ def test_react_enrich_workpaper_fills_missing_fields():
             {"title": "Company Profile", "url": "https://c.example", "content": "Profile"},
         ]
     )
-    updated = react_enrich_workpaper(workpaper, llm, tavily)
+    updated = react_enrich_workpaper(workpaper, llm, tavily, max_retries=1)
     assert updated["company_profile"] == "Example Co."
     assert updated["industry_comparables"] == "Peer A, Peer B"
     assert tavily.queries

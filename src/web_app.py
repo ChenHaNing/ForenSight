@@ -1,15 +1,20 @@
 import json
+import io
+import html
+import re
 import time
 import uuid
 import threading
+import zipfile
 from pathlib import Path
 from typing import Callable, Optional, List, Dict, Any
 
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, UploadFile, File
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
+from pypdf import PdfReader
 
 from .config import load_config
 from .llm_client import LLMClient
@@ -41,16 +46,18 @@ from .pdf_loader import (
 BASE_DIR = Path(__file__).resolve().parents[1]
 TEMPLATES_DIR = BASE_DIR / "templates"
 STATIC_DIR = BASE_DIR / "static"
-SAMPLE_10K = BASE_DIR / "aapl_10-K-2025-As-Filed.pdf"
 
 RUNS: Dict[str, Dict[str, Any]] = {}
 RUN_LOCK = threading.Lock()
 RUN_TIMEOUT_SECONDS = 300
+UPLOADED_REPORTS: Dict[str, Dict[str, Any]] = {}
+UPLOADED_REPORT_LOCK = threading.Lock()
+UPLOADED_REPORT_TTL_SECONDS = 60 * 60
 
 
 class RunRequest(BaseModel):
     input_texts: Optional[List[str]] = None
-    use_samples: bool = True
+    uploaded_report_id: Optional[str] = None
     enable_defense: bool = True
     provider: Optional[str] = None
     model: Optional[str] = None
@@ -81,7 +88,6 @@ def create_app(
     @app.get("/", response_class=HTMLResponse)
     def index(request: Request):
         config = load_config()
-        _, has_samples = _get_sample_pdf_paths()
         return templates.TemplateResponse(
             "index.html",
             {
@@ -91,7 +97,6 @@ def create_app(
                     "model": config.llm_model_name,
                     "base_url": config.llm_base_url,
                 },
-                "has_samples": has_samples,
                 "has_api_key": bool(config.llm_api_key),
             },
         )
@@ -108,15 +113,20 @@ def create_app(
             raise HTTPException(status_code=400, detail="Missing API key")
 
         input_texts = payload.input_texts
-        pdf_paths: Optional[List[str]] = None
-
+        uploaded_filename: Optional[str] = None
+        if payload.uploaded_report_id:
+            with UPLOADED_REPORT_LOCK:
+                _cleanup_uploaded_reports_locked()
+                uploaded = UPLOADED_REPORTS.get(payload.uploaded_report_id)
+            if not uploaded:
+                raise HTTPException(status_code=400, detail="上传文件不存在或已过期，请重新上传")
+            uploaded_text = str(uploaded.get("text", "")).strip()
+            if not uploaded_text:
+                raise HTTPException(status_code=400, detail="上传文件内容为空，请重新上传")
+            input_texts = [uploaded_text]
+            uploaded_filename = str(uploaded.get("filename", "")).strip() or None
         if not input_texts:
-            if payload.use_samples:
-                pdf_paths, has_samples = _get_sample_pdf_paths()
-                if not has_samples:
-                    raise HTTPException(status_code=400, detail="Sample 10-K PDF not found")
-            else:
-                raise HTTPException(status_code=400, detail="No input texts or sample PDFs")
+            raise HTTPException(status_code=400, detail="No input texts or uploaded report")
 
         output_dir = _new_output_dir()
         llm = llm_factory(provider, model, api_key, base_url)
@@ -127,7 +137,7 @@ def create_app(
         if mode == "sync":
             final_report = run_pipeline(
                 input_texts=input_texts,
-                pdf_paths=pdf_paths,
+                pdf_paths=None,
                 llm=llm,
                 output_dir=output_dir,
                 enable_defense=payload.enable_defense,
@@ -161,7 +171,7 @@ def create_app(
                     "step_outputs": step_outputs,
                     "meta": {
                         "output_dir": str(output_dir),
-                        "used_samples": payload.use_samples,
+                        "uploaded_filename": uploaded_filename,
                     },
                 }
             )
@@ -174,7 +184,10 @@ def create_app(
                 "agent_reports": {},
                 "final_report": None,
                 "workpaper": None,
-                "meta": {"output_dir": str(output_dir), "used_samples": payload.use_samples},
+                "meta": {
+                    "output_dir": str(output_dir),
+                    "uploaded_filename": uploaded_filename,
+                },
                 "started_at": time.time(),
                 "last_update": time.time(),
             }
@@ -184,7 +197,7 @@ def create_app(
             args=(
                 run_id,
                 input_texts,
-                pdf_paths,
+                None,
                 llm,
                 output_dir,
                 payload.enable_defense,
@@ -195,6 +208,41 @@ def create_app(
         thread.start()
 
         return JSONResponse({"run_id": run_id})
+
+    @app.post("/api/upload-report")
+    async def upload_report(file: UploadFile = File(...)):
+        filename = (file.filename or "").strip()
+        if not filename:
+            raise HTTPException(status_code=400, detail="缺少文件名")
+
+        content = await file.read()
+        if not content:
+            raise HTTPException(status_code=400, detail="上传文件为空")
+
+        try:
+            extracted_text = _extract_uploaded_report_text(filename, content)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+
+        if len(extracted_text.strip()) < 20:
+            raise HTTPException(status_code=400, detail="文档可提取内容过少，请检查文件格式")
+
+        report_id = uuid.uuid4().hex
+        with UPLOADED_REPORT_LOCK:
+            _cleanup_uploaded_reports_locked()
+            UPLOADED_REPORTS[report_id] = {
+                "filename": filename,
+                "text": extracted_text,
+                "created_at": time.time(),
+            }
+
+        return JSONResponse(
+            {
+                "report_id": report_id,
+                "filename": filename,
+                "chars": len(extracted_text),
+            }
+        )
 
     @app.get("/api/status")
     def run_status(run_id: str):
@@ -220,10 +268,53 @@ def _new_output_dir() -> Path:
     return BASE_DIR / "outputs" / f"run_{time.time_ns()}_{uuid.uuid4().hex[:8]}"
 
 
-def _get_sample_pdf_paths() -> tuple[List[str], bool]:
-    if SAMPLE_10K.exists():
-        return [str(SAMPLE_10K)], True
-    return [], False
+def _cleanup_uploaded_reports_locked() -> None:
+    now = time.time()
+    expired_ids = [
+        report_id
+        for report_id, item in UPLOADED_REPORTS.items()
+        if now - float(item.get("created_at", 0.0)) > UPLOADED_REPORT_TTL_SECONDS
+    ]
+    for report_id in expired_ids:
+        UPLOADED_REPORTS.pop(report_id, None)
+
+
+def _extract_uploaded_report_text(filename: str, content: bytes) -> str:
+    suffix = Path(filename).suffix.lower()
+    if suffix == ".pdf":
+        return _extract_pdf_text_from_bytes(content)
+    if suffix in {".odf", ".odt"}:
+        return _extract_odf_text_from_bytes(content)
+    raise ValueError("仅支持上传 .odf / .odt / .pdf 格式财报")
+
+
+def _extract_pdf_text_from_bytes(content: bytes) -> str:
+    try:
+        reader = PdfReader(io.BytesIO(content))
+    except Exception as exc:
+        raise ValueError(f"PDF 解析失败: {exc}")
+
+    parts: List[str] = []
+    for page in reader.pages:
+        text = (page.extract_text() or "").replace("\u0000", " ").strip()
+        if text:
+            parts.append(text)
+    return "\n".join(parts)
+
+
+def _extract_odf_text_from_bytes(content: bytes) -> str:
+    try:
+        with zipfile.ZipFile(io.BytesIO(content)) as zf:
+            if "content.xml" not in zf.namelist():
+                raise ValueError("ODF 文件缺少 content.xml")
+            raw_xml = zf.read("content.xml").decode("utf-8", errors="ignore")
+    except zipfile.BadZipFile:
+        raise ValueError("ODF 文件格式无效")
+
+    text = re.sub(r"<[^>]+>", " ", raw_xml)
+    text = html.unescape(text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
 
 
 def _run_pipeline_stream(

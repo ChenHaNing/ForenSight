@@ -46,16 +46,14 @@
         </label>
         <span>启用辩护智能体</span>
       </div>
-      <div class="form-row">
-        <label class="switch">
-          <input id="use_samples" type="checkbox" {% if has_samples %}checked{% endif %} />
-          <span class="slider"></span>
-        </label>
-        <span>使用样本文档</span>
+      <div class="form-group">
+        <label>上传财报（ODF/PDF）</label>
+        <input id="report-file" type="file" accept=".odf,.odt,.pdf" />
+        <div class="hint" id="upload-status">未上传文件（可选）</div>
       </div>
       <button class="primary" id="run-btn">运行分析</button>
       <div class="hint">
-        可使用输入文本或本地 PDF 进行分析。<br />
+        可使用输入文本或上传 ODF/PDF 财报进行分析。<br />
         API Key 从环境变量读取，不在前端显示。
       </div>
       {% if not has_api_key %}
@@ -191,24 +189,24 @@
         </div>
       </section>
 
-      <section class="grid">
+      <section class="grid report-row">
         <div class="card report">
           <h3>综合裁决报告</h3>
           <div class="report-grid">
-            <div>
-              <p class="label">总体风险等级</p>
-              <p class="value" id="risk-level">—</p>
+            <div class="risk-level-card">
+              <p class="label report-subtitle">总体风险等级</p>
+              <p class="value risk-level-value" id="risk-level">—</p>
             </div>
-            <div>
-              <p class="label">接受的风险点</p>
+            <div class="report-block">
+              <p class="label report-subtitle">接受的风险点</p>
               <ul id="accepted-points"></ul>
             </div>
-            <div>
-              <p class="label">驳回的风险点</p>
+            <div class="report-block">
+              <p class="label report-subtitle">驳回的风险点</p>
               <ul id="rejected-points"></ul>
             </div>
-            <div>
-              <p class="label">监管建议</p>
+            <div class="report-block">
+              <p class="label report-subtitle">监管建议</p>
               <ul id="suggestions"></ul>
             </div>
           </div>
@@ -218,11 +216,11 @@
             <p class="muted" id="uncertainty">—</p>
           </div>
         </div>
-        <div class="card evidence">
+        <div class="card evidence summary-card">
           <h3>证据链摘要</h3>
           <div id="evidence-list" class="evidence-list"></div>
         </div>
-        <div class="card evidence">
+        <div class="card evidence summary-card">
           <h3>外部检索摘要</h3>
           <div id="external-search" class="evidence-list"></div>
         </div>

@@ -1,8 +1,11 @@
+import io
 import time
+import zipfile
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from src.llm_client import FakeLLM
+from tests.helpers.fake_llm import FakeLLM
 
 
 def _build_fake_responses():
@@ -126,6 +129,21 @@ def _build_fake_responses():
     ]
 
 
+def _build_minimal_odf(text: str) -> bytes:
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr(
+            "content.xml",
+            (
+                '<?xml version="1.0" encoding="UTF-8"?>'
+                "<office:document-content>"
+                f"<text:p>{text}</text:p>"
+                "</office:document-content>"
+            ),
+        )
+    return buffer.getvalue()
+
+
 def test_api_run_returns_report_payload():
     llm = FakeLLM(_build_fake_responses())
 
@@ -198,18 +216,58 @@ def test_api_run_async_eventually_completes():
     assert "final" in last_payload.get("step_outputs", {})
 
 
-def test_sample_pdf_paths_use_only_10k(tmp_path, monkeypatch):
-    from src import web_app
+def test_api_run_requires_real_input_or_uploaded_report():
+    from src.web_app import create_app
 
-    sample_10k = tmp_path / "aapl_10-K-2025-As-Filed.pdf"
-    sample_10k.write_text("dummy", encoding="utf-8")
+    app = create_app(llm_factory=lambda *_args, **_kwargs: FakeLLM(_build_fake_responses()))
+    client = TestClient(app)
 
-    monkeypatch.setattr(web_app, "SAMPLE_10K", sample_10k)
+    resp = client.post(
+        "/api/run?mode=sync",
+        json={
+            "enable_defense": True,
+        },
+    )
+    assert resp.status_code == 400
+    assert resp.json().get("detail") == "No input texts or uploaded report"
 
-    paths, has_samples = web_app._get_sample_pdf_paths()
 
-    assert has_samples is True
-    assert paths == [str(sample_10k)]
+def test_index_does_not_show_sample_toggle():
+    from src.web_app import create_app
+
+    app = create_app(llm_factory=lambda *_args, **_kwargs: FakeLLM(_build_fake_responses()))
+    client = TestClient(app)
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    assert "使用样本文档" not in resp.text
+
+
+def test_frontend_report_visual_hooks_present():
+    from src.web_app import create_app
+
+    app = create_app(llm_factory=lambda *_args, **_kwargs: FakeLLM(_build_fake_responses()))
+    client = TestClient(app)
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.text
+    assert 'class="grid report-row"' in html
+    assert 'class="risk-level-card"' in html
+    assert html.count('class="label report-subtitle"') == 4
+    assert html.count("summary-card") == 2
+
+    root = Path(__file__).resolve().parents[1]
+    css_text = (root / "static" / "styles.css").read_text(encoding="utf-8")
+    assert ".report-grid li.is-rejected" in css_text
+    assert ".summary-card .evidence-list .table-wrap" in css_text
+    assert "overflow: hidden;" in css_text
+
+    js_text = (root / "static" / "app.js").read_text(encoding="utf-8")
+    assert "fillList(rejectedPointsEl, data.final_report?.rejected_points, 'is-rejected')" in js_text
+    assert "function syncSummaryCardHeights()" in js_text
+    assert "自主调查" in js_text
+    assert "function formatReactAttempts" in js_text
 
 
 def test_api_run_sync_uses_unique_output_dir_even_same_second(monkeypatch):
@@ -330,3 +388,48 @@ def test_run_pipeline_stream_prefers_highest_scored_financial_text(monkeypatch, 
     )
 
     assert "Consolidated Statements of Operations" in captured["text"]
+
+
+def test_upload_report_odf_can_be_used_for_sync_run():
+    from src.web_app import create_app
+
+    app = create_app(llm_factory=lambda *_args, **_kwargs: FakeLLM(_build_fake_responses()))
+    client = TestClient(app)
+
+    upload_resp = client.post(
+        "/api/upload-report",
+        files={
+            "file": (
+                "report.odf",
+                _build_minimal_odf("Revenue grew with stable cash flow."),
+                "application/vnd.oasis.opendocument.text",
+            )
+        },
+    )
+    assert upload_resp.status_code == 200
+    upload_payload = upload_resp.json()
+    assert upload_payload.get("report_id")
+
+    run_resp = client.post(
+        "/api/run?mode=sync",
+        json={
+            "uploaded_report_id": upload_payload["report_id"],
+            "enable_defense": True,
+        },
+    )
+    assert run_resp.status_code == 200
+    payload = run_resp.json()
+    assert payload["final_report"]["overall_risk_level"] == "medium"
+
+
+def test_upload_report_rejects_unsupported_extension():
+    from src.web_app import create_app
+
+    app = create_app(llm_factory=lambda *_args, **_kwargs: FakeLLM(_build_fake_responses()))
+    client = TestClient(app)
+
+    resp = client.post(
+        "/api/upload-report",
+        files={"file": ("report.xlsx", b"fake", "application/octet-stream")},
+    )
+    assert resp.status_code == 400

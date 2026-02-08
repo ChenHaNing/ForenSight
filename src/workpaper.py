@@ -147,7 +147,32 @@ CONTEXT_PACK_SCHEMA = {
 }
 
 
-MISSING_MARKERS = ["缺失", "无法评估", "信息不足", "未知", "未披露"]
+ENRICHABLE_WORKPAPER_FIELDS = [
+    "company_profile",
+    "industry_comparables",
+    "industry_benchmark_summary",
+    "external_search_summary",
+]
+
+WORKPAPER_RESEARCH_PLAN_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "need_autonomous_research": {"type": "boolean"},
+        "minimum_rounds": {"type": "integer"},
+        "target_fields": {"type": "array", "items": {"type": "string"}},
+        "follow_up_queries": {"type": "array", "items": {"type": "string"}},
+        "reason": {"type": "string"},
+    },
+    "required": [
+        "need_autonomous_research",
+        "minimum_rounds",
+        "target_fields",
+        "follow_up_queries",
+        "reason",
+    ],
+}
+
+MAX_WORKPAPER_RESEARCH_ROUNDS = 4
 
 
 def react_enrich_workpaper(
@@ -163,55 +188,151 @@ def react_enrich_workpaper(
 
     seen_queries = set()
     attempts = 0
-    while attempts < max_retries:
-        missing_fields = _find_missing_fields(workpaper)
-        if not missing_fields:
+    required_min_rounds = 0
+    max_rounds = max(min(max_retries, MAX_WORKPAPER_RESEARCH_ROUNDS), 1)
+
+    while attempts < max_rounds:
+        plan = _request_workpaper_research_plan(workpaper, llm, attempts)
+        required_min_rounds = max(required_min_rounds, plan["minimum_rounds"])
+        continue_research = plan["need_autonomous_research"] or attempts < required_min_rounds
+        if not continue_research:
             break
+
         company = (
             workpaper.get("company_profile")
             or workpaper.get("context_pack", {}).get("company_name")
             or "目标公司"
         )
-        queries = _build_workpaper_queries(company, missing_fields)
+        target_fields = _normalize_target_fields(plan.get("target_fields", []))
+        if not target_fields and plan["need_autonomous_research"]:
+            target_fields = ENRICHABLE_WORKPAPER_FIELDS[:]
+
+        queries = _build_workpaper_research_queries(company, plan, attempts)
         new_queries = [q for q in queries if q not in seen_queries]
-        if not new_queries:
-            break
-        external_results = []
+        external_results: List[Dict[str, Any]] = []
         for query in new_queries:
             seen_queries.add(query)
             external_results.extend(tavily_client.search(query, max_results=5))
         external_results = filter_external_results_by_company(external_results, company)
-        if not external_results:
-            break
 
-        schema = {"type": "object", "properties": {}, "required": []}
-        for field in missing_fields:
-            schema["properties"][field] = {"type": "string"}
-            schema["required"].append(field)
+        if external_results and target_fields:
+            schema = {"type": "object", "properties": {}, "required": []}
+            for field in target_fields:
+                schema["properties"][field] = {"type": "string"}
+                schema["required"].append(field)
 
-        lines: List[str] = []
-        for item in external_results:
-            title = item.get("title", "")
-            url = item.get("url", "")
-            snippet = item.get("content", "")
-            lines.append(f"- {title} | {snippet} ({url})")
+            lines: List[str] = []
+            for item in external_results:
+                title = item.get("title", "")
+                url = item.get("url", "")
+                snippet = item.get("content", "")
+                lines.append(f"- {title} | {snippet} ({url})")
 
-        system_prompt = "你是企业信息补全专家，基于检索结果补全工作底稿缺失字段。"
-        user_prompt = (
-            "以下工作底稿字段缺失，请根据外部检索结果补充，确保简洁准确。\n"
-            f"缺失字段：{', '.join(missing_fields)}\n\n"
-            f"当前底稿摘要：\n{workpaper}\n\n"
-            "外部检索摘要：\n"
-            + ("\n".join(lines) if lines else "无外部检索结果")
-        )
+            system_prompt = "你是企业信息补全专家，基于检索结果补全工作底稿缺失字段。"
+            user_prompt = (
+                "请根据外部检索结果补全指定字段，保证简洁、可审计且仅输出目标字段。\n"
+                f"补全字段：{', '.join(target_fields)}\n\n"
+                f"当前底稿摘要：\n{workpaper}\n\n"
+                "外部检索摘要：\n"
+                + ("\n".join(lines) if lines else "无外部检索结果")
+            )
 
-        filled = llm.generate_json(system_prompt, user_prompt, schema)
-        for field, value in filled.items():
-            workpaper[field] = value
-        if external_results:
+            filled = llm.generate_json(system_prompt, user_prompt, schema)
+            for field, value in filled.items():
+                if field in target_fields:
+                    workpaper[field] = value
             workpaper["_react_search"] = external_results
+
         attempts += 1
+
     return workpaper
+
+
+def _request_workpaper_research_plan(workpaper: Dict[str, Any], llm, attempts: int) -> Dict[str, Any]:
+    system_prompt = "你是工作底稿完整性审计智能体，负责决定是否需要继续自主外部调查。"
+    user_prompt = (
+        "请先判断工作底稿当前完整性，再给出research_plan。\n"
+        "要求：\n"
+        "1) need_autonomous_research: 是否继续调查；\n"
+        "2) minimum_rounds: 建议最少调查轮次(0-4)；\n"
+        f"3) target_fields: 仅可从 {ENRICHABLE_WORKPAPER_FIELDS} 中选择；\n"
+        "4) follow_up_queries: 给出可执行检索语句；\n"
+        "5) reason: 说明理由。\n\n"
+        f"当前已完成轮次：{attempts}\n"
+        f"当前工作底稿：\n{workpaper}\n"
+    )
+    plan_raw = llm.generate_json(system_prompt, user_prompt, WORKPAPER_RESEARCH_PLAN_SCHEMA)
+    return _normalize_workpaper_research_plan(plan_raw)
+
+
+def _normalize_workpaper_research_plan(plan: Dict[str, Any]) -> Dict[str, Any]:
+    if not isinstance(plan, dict):
+        return {
+            "need_autonomous_research": False,
+            "minimum_rounds": 0,
+            "target_fields": [],
+            "follow_up_queries": [],
+            "reason": "invalid_plan",
+        }
+    need_research = bool(plan.get("need_autonomous_research"))
+    minimum_rounds = _normalize_workpaper_rounds(plan.get("minimum_rounds"))
+    target_fields = _normalize_target_fields(plan.get("target_fields", []))
+    follow_up_queries = []
+    seen = set()
+    for query in plan.get("follow_up_queries") or []:
+        text = str(query).strip()
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        follow_up_queries.append(text)
+    reason = str(plan.get("reason", "")).strip()
+    return {
+        "need_autonomous_research": need_research,
+        "minimum_rounds": minimum_rounds,
+        "target_fields": target_fields,
+        "follow_up_queries": follow_up_queries[:5],
+        "reason": reason,
+    }
+
+
+def _normalize_target_fields(fields: List[str]) -> List[str]:
+    normalized = []
+    seen = set()
+    for field in fields or []:
+        text = str(field).strip()
+        if text in ENRICHABLE_WORKPAPER_FIELDS and text not in seen:
+            seen.add(text)
+            normalized.append(text)
+    return normalized
+
+
+def _normalize_workpaper_rounds(value: Any) -> int:
+    try:
+        rounds = int(value)
+    except (TypeError, ValueError):
+        return 0
+    return max(0, min(MAX_WORKPAPER_RESEARCH_ROUNDS, rounds))
+
+
+def _build_workpaper_research_queries(company: str, plan: Dict[str, Any], attempt_index: int) -> List[str]:
+    guardrail_queries = [
+        f"{company} 年报 风险因素 财务附注 披露",
+        f"{company} annual report filing footnote disclosure",
+        f"{company} regulator enforcement investigation disclosure",
+    ]
+    queries = []
+    queries.extend(plan.get("follow_up_queries", []))
+    queries.append(guardrail_queries[attempt_index % len(guardrail_queries)])
+
+    deduped = []
+    seen = set()
+    for query in queries:
+        text = re.sub(r"\s+", " ", str(query).strip())
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        deduped.append(text)
+    return deduped[:6]
 
 
 def sanitize_company_scope_fields(workpaper: Dict[str, Any], company_name: str, llm) -> Dict[str, Any]:
@@ -326,40 +447,8 @@ def build_context_capsule(pack: Dict[str, Any]) -> str:
     )
 
 
-def _find_missing_fields(workpaper: Dict[str, Any]) -> List[str]:
-    fields = [
-        "company_profile",
-        "industry_comparables",
-        "industry_benchmark_summary",
-        "external_search_summary",
-    ]
-    missing = []
-    for field in fields:
-        value = workpaper.get(field)
-        if _is_missing_value(value):
-            missing.append(field)
-    return missing
-
-
 def _is_missing_value(value: Any) -> bool:
     if value is None:
         return True
     text = str(value).strip()
-    if not text:
-        return True
-    if len(text) < 10:
-        return True
-    return any(marker in text for marker in MISSING_MARKERS)
-
-
-def _build_workpaper_queries(company: str, missing_fields: List[str]) -> List[str]:
-    queries = []
-    if "company_profile" in missing_fields:
-        queries.append(f"{company} 公司简介 业务 概况")
-    if "industry_comparables" in missing_fields:
-        queries.append(f"{company} 竞争对手 同行业 对比")
-    if "industry_benchmark_summary" in missing_fields:
-        queries.append(f"{company} 行业 指标 基准")
-    if "external_search_summary" in missing_fields:
-        queries.append(f"{company} 财务 风险 监管 动态")
-    return queries
+    return text == ""

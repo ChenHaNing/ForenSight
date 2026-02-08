@@ -4,6 +4,8 @@ const timeline = document.getElementById('timeline');
 const agentContainer = document.getElementById('agents');
 const downloadFinal = document.getElementById('download-final');
 const downloadWorkpaper = document.getElementById('download-workpaper');
+const reportFileInput = document.getElementById('report-file');
+const uploadStatusEl = document.getElementById('upload-status');
 const hasKey = document.body.dataset.hasKey === 'true';
 
 const riskLevelEl = document.getElementById('risk-level');
@@ -22,6 +24,8 @@ const defenseOutputEl = document.getElementById('defense-output');
 const finalOutputEl = document.getElementById('final-output');
 const stepPanels = document.querySelectorAll('#step-outputs details');
 const traceSegments = document.querySelectorAll('#trace-bar .trace-segment');
+const reportCardEl = document.querySelector('.report-row .card.report');
+const summaryCards = document.querySelectorAll('.report-row .summary-card');
 const nodeMetaEls = {
   collect: document.getElementById('node-meta-collect'),
   base: document.getElementById('node-meta-base'),
@@ -40,6 +44,8 @@ const FRAUD_AGENTS = [
   { key: 'fraud_type_F', title: '特殊行业/业务模式' },
 ];
 const renderCache = new Map();
+let uploadedReportId = null;
+let uploadedReportKey = null;
 
 function escapeHtml(value) {
   return String(value)
@@ -121,6 +127,24 @@ function setTraceState(step, state) {
   }
 }
 
+function syncSummaryCardHeights() {
+  if (!reportCardEl || summaryCards.length === 0) return;
+
+  if (window.matchMedia('(max-width: 1200px)').matches) {
+    summaryCards.forEach((card) => card.style.removeProperty('height'));
+    return;
+  }
+
+  summaryCards.forEach((card) => card.style.removeProperty('height'));
+  const reportHeight = reportCardEl.getBoundingClientRect().height;
+  if (!Number.isFinite(reportHeight) || reportHeight <= 0) return;
+
+  const targetHeight = `${Math.round(reportHeight)}px`;
+  summaryCards.forEach((card) => {
+    card.style.height = targetHeight;
+  });
+}
+
 function resetTimeline() {
   timeline.querySelectorAll('li').forEach((item) => {
     item.classList.remove('active', 'complete');
@@ -198,10 +222,18 @@ function completeStep(step) {
   }
 }
 
+function formatReactAttempts(report) {
+  const attempts = Number(report?._react_attempts);
+  if (!Number.isFinite(attempts) || attempts < 0) {
+    return '自主调查0轮';
+  }
+  return `自主调查${Math.floor(attempts)}轮`;
+}
+
 function updateAgentCard(name, report) {
   const card = agentContainer.querySelector(`[data-agent="${name}"]`);
   if (!card) return;
-  card.querySelector('.status').textContent = `风险等级：${report.risk_level}`;
+  card.querySelector('.status').textContent = `风险等级：${report.risk_level}｜${formatReactAttempts(report)}`;
   const body = card.querySelector('.body');
   const points = (report.risk_points || []).slice(0, 3);
   body.innerHTML = points.map((p) => `<div>• ${p}</div>`).join('') || '—';
@@ -217,7 +249,7 @@ function updateJudge(report) {
   flashUpdate(card);
 }
 
-function fillList(container, items) {
+function fillList(container, items, itemClass = '') {
   container.innerHTML = '';
   if (!items || items.length === 0) {
     container.innerHTML = '<li class="muted">—</li>';
@@ -226,6 +258,9 @@ function fillList(container, items) {
   items.forEach((item) => {
     const li = document.createElement('li');
     li.textContent = item;
+    if (itemClass) {
+      li.classList.add(itemClass);
+    }
     container.appendChild(li);
   });
 }
@@ -234,12 +269,14 @@ function fillEvidence(evidence) {
   if (!evidence || evidence.length === 0) {
     const changed = setHTMLIfChanged(evidenceListEl, '<div class="muted">暂无证据片段</div>', 'evidence:empty');
     if (changed) flashUpdate(evidenceListEl);
+    requestAnimationFrame(syncSummaryCardHeights);
     return;
   }
   const rows = evidence.slice(0, 12).map((item, index) => [index + 1, item.quote || '—', item.source || '—']);
   const html = buildTable(['序号', '证据片段', '来源'], rows);
   const changed = setHTMLIfChanged(evidenceListEl, html, 'evidence:data');
   if (changed) flashUpdate(evidenceListEl);
+  requestAnimationFrame(syncSummaryCardHeights);
 }
 
 function fillExternalSearch(results) {
@@ -250,6 +287,7 @@ function fillExternalSearch(results) {
       'external:empty',
     );
     if (changed) flashUpdate(externalSearchEl);
+    requestAnimationFrame(syncSummaryCardHeights);
     return;
   }
   const rows = results.slice(0, 12).map((item, index) => [
@@ -261,6 +299,7 @@ function fillExternalSearch(results) {
   const html = buildTable(['序号', '标题', '摘要', '链接'], rows);
   const changed = setHTMLIfChanged(externalSearchEl, html, 'external:data');
   if (changed) flashUpdate(externalSearchEl);
+  requestAnimationFrame(syncSummaryCardHeights);
 }
 
 function enableDownloads(finalReport, workpaper) {
@@ -336,17 +375,18 @@ function renderFraudAgentsOutput(stepsData) {
   const rows = FRAUD_AGENTS.map(({ key, title }) => {
     const report = stepsData[key];
     if (!report) {
-      return [title, '处理中', '—', '—', '等待智能体返回'];
+      return [title, '处理中', '—', '—', '—', '等待智能体返回'];
     }
     return [
       title,
       '已完成',
       report.risk_level || '—',
       report.confidence ?? '—',
+      formatReactAttempts(report),
       report.risk_points || [],
     ];
   });
-  return buildTable(['智能体', '状态', '风险等级', '置信度', '关键风险点'], rows);
+  return buildTable(['智能体', '状态', '风险等级', '置信度', '自主调查', '关键风险点'], rows);
 }
 
 function buildAgentHtml(title, report) {
@@ -357,6 +397,7 @@ function buildAgentHtml(title, report) {
     ['智能体', title],
     ['风险等级', report.risk_level || '—'],
     ['置信度', report.confidence ?? '—'],
+    ['自主调查轮次', formatReactAttempts(report)],
     ['关键风险点', report.risk_points || []],
     ['关键证据', report.evidence || []],
     ['摘要', report.reasoning_summary || '—'],
@@ -385,7 +426,7 @@ function resetOutputs() {
   renderCache.clear();
   riskLevelEl.textContent = '—';
   fillList(acceptedPointsEl, []);
-  fillList(rejectedPointsEl, []);
+  fillList(rejectedPointsEl, [], 'is-rejected');
   fillList(suggestionsEl, []);
   rationaleEl.textContent = '—';
   uncertaintyEl.textContent = '—';
@@ -407,6 +448,46 @@ function resetOutputs() {
     card.classList.remove('step-active');
   });
   delete document.body.dataset.activeStep;
+  requestAnimationFrame(syncSummaryCardHeights);
+}
+
+function currentReportFileKey(file) {
+  return `${file.name}:${file.size}:${file.lastModified}`;
+}
+
+async function uploadReportIfNeeded() {
+  const file = reportFileInput?.files?.[0];
+  if (!file) {
+    uploadedReportId = null;
+    uploadedReportKey = null;
+    if (uploadStatusEl) uploadStatusEl.textContent = '未上传文件（可选）';
+    return null;
+  }
+
+  const nextKey = currentReportFileKey(file);
+  if (uploadedReportId && uploadedReportKey === nextKey) {
+    return uploadedReportId;
+  }
+
+  if (uploadStatusEl) uploadStatusEl.textContent = '上传并解析中...';
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const resp = await fetch('/api/upload-report', {
+    method: 'POST',
+    body: formData,
+  });
+  const data = await resp.json();
+  if (!resp.ok) {
+    throw new Error(data.detail || '文件上传失败');
+  }
+
+  uploadedReportId = data.report_id;
+  uploadedReportKey = nextKey;
+  if (uploadStatusEl) {
+    uploadStatusEl.textContent = `已上传：${data.filename}（${data.chars} 字）`;
+  }
+  return uploadedReportId;
 }
 
 async function runAnalysis() {
@@ -414,22 +495,26 @@ async function runAnalysis() {
   resetOutputs();
   setStatus('运行中');
 
-  const payload = {
-    provider: document.getElementById('provider').value,
-    model: document.getElementById('model').value,
-    base_url: document.getElementById('base_url').value,
-    enable_defense: document.getElementById('enable_defense').checked,
-    use_samples: document.getElementById('use_samples').checked,
-  };
-
-  activateStep(steps[0]);
-  if (!payload.enable_defense) {
-    const disabledDefenseHtml = buildTable(['字段', '内容'], [['辩护智能体', '已禁用']]);
-    const changed = setHTMLIfChanged(defenseOutputEl, disabledDefenseHtml, 'defense:disabled');
-    if (changed) flashUpdate(defenseOutputEl);
-  }
-
   try {
+    const payload = {
+      provider: document.getElementById('provider').value,
+      model: document.getElementById('model').value,
+      base_url: document.getElementById('base_url').value,
+      enable_defense: document.getElementById('enable_defense').checked,
+    };
+
+    const reportId = await uploadReportIfNeeded();
+    if (reportId) {
+      payload.uploaded_report_id = reportId;
+    }
+
+    activateStep(steps[0]);
+    if (!payload.enable_defense) {
+      const disabledDefenseHtml = buildTable(['字段', '内容'], [['辩护智能体', '已禁用']]);
+      const changed = setHTMLIfChanged(defenseOutputEl, disabledDefenseHtml, 'defense:disabled');
+      if (changed) flashUpdate(defenseOutputEl);
+    }
+
     const resp = await fetch('/api/run?mode=async', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -523,7 +608,7 @@ async function runAnalysis() {
       if (data.final_report) {
         riskLevelEl.textContent = data.final_report?.overall_risk_level || '—';
         fillList(acceptedPointsEl, data.final_report?.accepted_points);
-        fillList(rejectedPointsEl, data.final_report?.rejected_points);
+        fillList(rejectedPointsEl, data.final_report?.rejected_points, 'is-rejected');
         fillList(suggestionsEl, data.final_report?.suggestions);
         rationaleEl.textContent = data.final_report?.rationale || '—';
         uncertaintyEl.textContent = data.final_report?.uncertainty || '—';
@@ -547,6 +632,8 @@ async function runAnalysis() {
       if (externalResults.length > 0) {
         fillExternalSearch(externalResults);
       }
+
+      requestAnimationFrame(syncSummaryCardHeights);
 
       if (data.status === 'completed') {
         finished = true;
@@ -579,10 +666,27 @@ async function runAnalysis() {
   }
 }
 
+window.addEventListener('resize', syncSummaryCardHeights);
+if ('ResizeObserver' in window && reportCardEl) {
+  const reportHeightObserver = new ResizeObserver(() => syncSummaryCardHeights());
+  reportHeightObserver.observe(reportCardEl);
+}
+requestAnimationFrame(syncSummaryCardHeights);
+
 if (!hasKey) {
   runBtn.disabled = true;
   runBtn.textContent = '请先配置 API Key';
   setStatus('未配置');
 } else {
+  if (reportFileInput && uploadStatusEl) {
+    reportFileInput.addEventListener('change', () => {
+      uploadedReportId = null;
+      uploadedReportKey = null;
+      const file = reportFileInput.files?.[0];
+      uploadStatusEl.textContent = file
+        ? `已选择：${file.name}（点击运行后上传）`
+        : '未上传文件（可选）';
+    });
+  }
   runBtn.addEventListener('click', runAnalysis);
 }

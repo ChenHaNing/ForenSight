@@ -190,7 +190,7 @@ def extract_financial_statements(text: str, llm) -> Dict[str, Any]:
 
 
 def extract_financial_statements_parallel(text: str, llm, parallel: bool = True) -> Dict[str, Any]:
-    # If llm is not thread-safe (e.g., FakeLLM), fall back to sequential
+    # Fall back to sequential mode when a non-thread-safe test double is injected.
     if getattr(llm, "_responses", None) is not None:
         parallel = False
 

@@ -311,6 +311,11 @@ input:focus-visible {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 16px;
+  align-items: stretch;
+}
+
+.report-row {
+  align-items: stretch;
 }
 
 .analysis-grid {
@@ -628,6 +633,19 @@ input:focus-visible {
   margin-top: 10px;
 }
 
+.report-grid > div {
+  border-radius: 12px;
+  border: 1px solid #d4e3f5;
+  background: linear-gradient(180deg, #fbfdff, #f4f8ff);
+  padding: 12px 14px;
+}
+
+.report-block {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
 .report-grid ul {
   list-style: none;
   display: grid;
@@ -638,6 +656,59 @@ input:focus-visible {
   padding: 6px 10px;
   border-radius: 8px;
   background: #f2f7ff;
+}
+
+.risk-level-card {
+  min-height: 168px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background: linear-gradient(165deg, #fdfefe, #eef5ff);
+}
+
+.risk-level-card .report-subtitle {
+  align-self: center;
+}
+
+.risk-level-value {
+  margin-top: 8px;
+  font-size: 36px;
+  letter-spacing: 1px;
+}
+
+.report-subtitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: #1f4f8e;
+  background: #eaf2ff;
+  border: 1px solid #cbdbf3;
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+.report-subtitle::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #2e7eea;
+  box-shadow: 0 0 0 4px rgba(46, 126, 234, 0.14);
+}
+
+.report-grid li.is-rejected {
+  text-decoration-line: line-through;
+  text-decoration-thickness: 1.5px;
+  text-decoration-color: rgba(166, 59, 59, 0.85);
+  color: #6d7f98;
+  background: #f8f1f1;
+  border: 1px dashed #e6c7c7;
 }
 
 .report-note {
@@ -671,6 +742,24 @@ input:focus-visible {
 
 .evidence-list .table-wrap {
   max-height: 360px;
+}
+
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.summary-card .evidence-list {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.summary-card .evidence-list .table-wrap {
+  height: 100%;
+  max-height: none;
 }
 
 .evidence-item {

@@ -13,6 +13,16 @@ REPORT_SCHEMA = {
         "reasoning_summary": {"type": "string"},
         "suggestions": {"type": "array", "items": {"type": "string"}},
         "confidence": {"type": "number"},
+        "research_plan": {
+            "type": "object",
+            "properties": {
+                "need_autonomous_research": {"type": "boolean"},
+                "minimum_rounds": {"type": "integer"},
+                "follow_up_queries": {"type": "array", "items": {"type": "string"}},
+                "reason": {"type": "string"},
+            },
+            "required": ["need_autonomous_research", "minimum_rounds", "follow_up_queries", "reason"],
+        },
     },
     "required": [
         "risk_level",
@@ -49,18 +59,7 @@ AGENT_INPUT_FIELD = {
 }
 
 
-UNKNOWN_MARKERS = ["信息不足", "无法评估", "缺失", "未知", "未提供", "不确定"]
-METRIC_GAP_QUERY_HINTS = {
-    "income_statement.revenue": "营业收入",
-    "income_statement.cost_of_goods_sold": "成本 成本费用 成本构成",
-    "income_statement.operating_income": "营业利润 经营利润",
-    "income_statement.ebit": "息税前利润 EBIT",
-    "income_statement.interest_expense": "利息费用",
-    "income_statement.ebitda": "EBITDA 折旧摊销",
-    "balance_sheet.inventory": "存货 存货跌价 存货减值",
-    "balance_sheet.accounts_receivable": "应收账款 坏账准备",
-    "balance_sheet.total_debt": "有息负债 债务结构",
-}
+MAX_REACT_RETRY_ROUNDS = 4
 
 
 def run_agent(
@@ -84,6 +83,11 @@ def run_agent(
         "3) 关注特征协同性，避免单点异常导致高风险。\n"
         "4) 输出风险点需对应具体证据。\n"
         "5) 若为关注类特征，需说明为何需要进一步核查。\n"
+        "6) 必须给出research_plan：\n"
+        "   - need_autonomous_research: 是否需要继续自主外部调查；\n"
+        "   - minimum_rounds: 建议最少补充调查轮次(0-4)；\n"
+        "   - follow_up_queries: 下一轮建议检索语句列表；\n"
+        "   - reason: 判定理由。\n"
     )
     capsule = workpaper.get("context_capsule", "")
     capsule_block = f"背景要点（上下文胶囊）：\n{capsule}\n\n" if capsule else ""
@@ -104,26 +108,39 @@ def run_agent(
         user_prompt += "\n\n背景要点（提醒）：\n" + capsule
 
     report = llm.generate_json(system_prompt, user_prompt, REPORT_SCHEMA)
+    react_attempts = 0
     if external_results:
         report["_external_search"] = external_results
 
     if getattr(llm, "_responses", None) is not None:
         react_retry = False
 
-    if react_retry and _needs_react_retry(report, workpaper) and tavily_client and getattr(tavily_client, "enabled", False):
-        for _ in range(max_retries):
-            retry_results = _build_react_retry_results(agent_name, workpaper, report, tavily_client)
+    tavily_enabled = bool(tavily_client and getattr(tavily_client, "enabled", False))
+    policy = _extract_research_plan(report)
+    should_retry = policy["need_autonomous_research"]
+    required_min_rounds = max(max_retries if should_retry else 0, policy["minimum_rounds"])
+
+    if react_retry and should_retry and tavily_enabled:
+        while react_attempts < MAX_REACT_RETRY_ROUNDS and (
+            react_attempts < required_min_rounds or policy["need_autonomous_research"]
+        ):
+            retry_results = _build_react_retry_results(agent_name, workpaper, report, tavily_client, attempt_index=react_attempts)
             if company_name:
                 retry_results = filter_external_results_by_company(retry_results, company_name)
             retry_prompt = user_prompt
             if retry_results:
                 retry_prompt += "\n\n补充检索摘要：\n" + _format_external_results(retry_results)
+            retry_prompt += f"\n\n当前已完成自主调查轮次：{react_attempts + 1}"
             retry_report = llm.generate_json(system_prompt, retry_prompt, REPORT_SCHEMA)
+            react_attempts += 1
             if retry_results:
                 retry_report["_external_search"] = retry_results
             report = retry_report
-            if not _needs_react_retry(report, workpaper):
+            policy = _extract_research_plan(report)
+            required_min_rounds = max(required_min_rounds, policy["minimum_rounds"])
+            if react_attempts >= required_min_rounds and not policy["need_autonomous_research"]:
                 break
+    report["_react_attempts"] = react_attempts
     return report
 
 
@@ -167,9 +184,16 @@ def _build_react_retry_results(
     workpaper: Dict[str, Any],
     report: Dict[str, Any],
     tavily_client,
+    attempt_index: int = 0,
 ) -> List[Dict[str, Any]]:
     company = workpaper.get("company_profile", "目标公司")
-    queries = _build_retry_queries(agent_name, company, workpaper, report)
+    queries = _build_retry_queries(
+        agent_name,
+        company,
+        workpaper,
+        report,
+        attempt_index=attempt_index,
+    )
     results: List[Dict[str, Any]] = []
     for query in queries:
         results.extend(tavily_client.search(query, max_results=4))
@@ -189,6 +213,7 @@ def _build_retry_queries(
     company: str,
     workpaper: Dict[str, Any],
     report: Dict[str, Any],
+    attempt_index: int = 0,
 ) -> List[str]:
     base_focus = {
         "base": "财务舞弊 风险 信号",
@@ -202,23 +227,14 @@ def _build_retry_queries(
     }.get(agent_name, "财务风险")
 
     queries = [f"{company} {base_focus}"]
+    queries.extend(_model_suggested_queries(report))
 
-    if _is_missing_value(workpaper.get("industry_comparables")):
-        queries.append(f"{company} 行业 对标 竞争格局 财务指标")
-    if _is_missing_value(workpaper.get("company_profile")):
-        queries.append(f"{company} 公司简介 主营业务 业务模式")
-
-    gap_terms = _metric_gap_terms(workpaper)
-    if gap_terms:
-        queries.append(f"{company} {' '.join(gap_terms[:4])} 最新年报 10-K 20-F")
-
-    summary = str(report.get("reasoning_summary", ""))
-    if any(marker in summary for marker in UNKNOWN_MARKERS):
-        queries.append(f"{company} 年报 风险因素 管理层讨论 财务附注")
-    if re.search(r"存货|减值", summary):
-        queries.append(f"{company} 存货 跌价准备 减值测试 计提政策")
-    if re.search(r"净利润|利润操纵", summary):
-        queries.append(f"{company} 净利润 调节 应计项目 非经常性损益")
+    guardrail_queries = [
+        f"{company} 年报 风险因素 管理层讨论 财务附注",
+        f"{company} annual report filing footnote disclosure",
+        f"{company} regulator enforcement investigation disclosure",
+    ]
+    queries.append(guardrail_queries[attempt_index % len(guardrail_queries)])
 
     deduped = []
     seen = set()
@@ -228,31 +244,7 @@ def _build_retry_queries(
             continue
         seen.add(normalized)
         deduped.append(normalized)
-    return deduped[:4]
-
-
-def _metric_gap_terms(workpaper: Dict[str, Any]) -> List[str]:
-    notes = workpaper.get("metrics_notes") or []
-    terms: List[str] = []
-    for note in notes:
-        text = str(note)
-        matched = re.search(r"([a-z_]+\.[a-z_]+)", text)
-        if not matched:
-            continue
-        key = matched.group(1)
-        hint = METRIC_GAP_QUERY_HINTS.get(key)
-        if hint:
-            terms.append(hint)
-    if not terms:
-        return []
-    deduped = []
-    seen = set()
-    for term in terms:
-        if term in seen:
-            continue
-        seen.add(term)
-        deduped.append(term)
-    return deduped
+    return deduped[:6]
 
 
 def _format_external_results(results: List[Dict[str, Any]]) -> str:
@@ -265,37 +257,43 @@ def _format_external_results(results: List[Dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
-def _needs_react_retry(report: Dict[str, Any], workpaper: Dict[str, Any]) -> bool:
+def _extract_research_plan(report: Dict[str, Any]) -> Dict[str, Any]:
+    plan = report.get("research_plan")
+    if isinstance(plan, dict):
+        need_research = bool(plan.get("need_autonomous_research"))
+        minimum_rounds = _normalize_rounds(plan.get("minimum_rounds"))
+        follow_up_queries = []
+        for query in plan.get("follow_up_queries") or []:
+            text = str(query).strip()
+            if text:
+                follow_up_queries.append(text)
+        reason = str(plan.get("reason", "")).strip()
+        return {
+            "need_autonomous_research": need_research,
+            "minimum_rounds": minimum_rounds,
+            "follow_up_queries": follow_up_queries[:4],
+            "reason": reason,
+        }
+
+    # Backward-compatible fallback: if no plan is produced, use evidence sufficiency.
     evidence = report.get("evidence") or []
-    if not evidence:
-        return True
-    risk_level = str(report.get("risk_level", "")).lower()
-    if risk_level in {"unknown", "n/a"}:
-        return True
-    summary = str(report.get("reasoning_summary", ""))
-    for marker in UNKNOWN_MARKERS:
-        if marker in summary:
-            return True
-    risk_points = " ".join([str(x) for x in (report.get("risk_points") or [])])
-    evidence_text = " ".join([str(x) for x in evidence])
-    joined = f"{risk_points} {evidence_text}"
-    for marker in UNKNOWN_MARKERS:
-        if marker in joined:
-            return True
-    if _is_missing_value(workpaper.get("industry_comparables")):
-        return True
-    return False
+    needs_fallback_retry = len(evidence) == 0
+    return {
+        "need_autonomous_research": needs_fallback_retry,
+        "minimum_rounds": 1 if needs_fallback_retry else 0,
+        "follow_up_queries": [],
+        "reason": "fallback_by_evidence",
+    }
 
 
-def _is_missing_value(value: Any) -> bool:
-    if value is None:
-        return True
-    text = str(value).strip()
-    if not text:
-        return True
-    if len(text) < 10:
-        return True
-    for marker in UNKNOWN_MARKERS:
-        if marker in text:
-            return True
-    return False
+def _model_suggested_queries(report: Dict[str, Any]) -> List[str]:
+    plan = _extract_research_plan(report)
+    return plan.get("follow_up_queries", [])
+
+
+def _normalize_rounds(value: Any) -> int:
+    try:
+        rounds = int(value)
+    except (TypeError, ValueError):
+        return 0
+    return max(0, min(MAX_REACT_RETRY_ROUNDS, rounds))
