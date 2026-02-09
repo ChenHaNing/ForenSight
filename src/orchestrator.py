@@ -22,7 +22,7 @@ from .workpaper import (
 )
 from .financials import extract_financials_with_fallback
 from .summarizer import summarize_text
-from .agents import run_agent
+from .agents import run_agents_suite
 from .run_logger import log_step
 
 
@@ -54,6 +54,7 @@ def run_pipeline(
     output_dir: Path,
     enable_defense: bool = True,
     tavily_client=None,
+    agent_max_concurrency: int = 4,
 ) -> Dict[str, Any]:
     if not input_texts and not pdf_paths:
         raise ValueError("input_texts or pdf_paths required")
@@ -131,38 +132,19 @@ def run_pipeline(
 
     _write_json(output_dir / "workpaper.json", workpaper)
 
-    reports: Dict[str, Dict[str, Any]] = {}
-    for agent in [
-        "base",
-        "fraud_type_A",
-        "fraud_type_B",
-        "fraud_type_C",
-        "fraud_type_D",
-        "fraud_type_E",
-        "fraud_type_F",
-    ]:
-        report = run_agent(
-            agent,
-            workpaper,
-            llm,
-            tavily_client=tavily_client,
-            react_retry=True,
-        )
-        reports[agent] = report
-        _write_json(output_dir / "agent_reports" / f"{agent}.json", report)
-        log_step(output_dir, f"agent:{agent}", report)
+    def _on_agent_result(agent_name: str, report: Dict[str, Any]) -> None:
+        _write_json(output_dir / "agent_reports" / f"{agent_name}.json", report)
+        log_step(output_dir, f"agent:{agent_name}", report)
 
-    if enable_defense:
-        defense_report = run_agent(
-            "defense",
-            workpaper,
-            llm,
-            tavily_client=tavily_client,
-            react_retry=True,
-        )
-        reports["defense"] = defense_report
-        _write_json(output_dir / "agent_reports" / "defense.json", defense_report)
-        log_step(output_dir, "agent:defense", defense_report)
+    reports = run_agents_suite(
+        workpaper,
+        llm,
+        tavily_client=tavily_client,
+        enable_defense=enable_defense,
+        react_retry=True,
+        max_concurrency=agent_max_concurrency,
+        on_agent_result=_on_agent_result,
+    )
 
     final_report = llm.generate_json(
         "你是裁决分析智能体，负责综合判断舞弊风险等级。",

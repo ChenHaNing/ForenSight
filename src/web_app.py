@@ -28,7 +28,7 @@ from .workpaper import (
     build_context_capsule,
     sanitize_company_scope_fields,
 )
-from .agents import run_agent
+from .agents import run_agents_suite
 from .tavily_client import TavilyClient
 from .financials import extract_financials_with_fallback
 from .summarizer import summarize_text
@@ -148,6 +148,7 @@ def create_app(
                 output_dir=output_dir,
                 enable_defense=payload.enable_defense,
                 tavily_client=tavily_client,
+                agent_max_concurrency=config.agent_max_concurrency,
             )
             workpaper_path = output_dir / "workpaper.json"
             workpaper = json.loads(workpaper_path.read_text(encoding="utf-8"))
@@ -208,6 +209,7 @@ def create_app(
                 output_dir,
                 payload.enable_defense,
                 tavily_client,
+                config.agent_max_concurrency,
             ),
             daemon=True,
         )
@@ -331,6 +333,7 @@ def _run_pipeline_stream(
     output_dir: Path,
     enable_defense: bool,
     tavily_client=None,
+    agent_max_concurrency: int = 4,
 ) -> None:
     try:
         texts: List[str] = []
@@ -415,41 +418,22 @@ def _run_pipeline_stream(
         _update_run(run_id, {"workpaper": workpaper})
 
         reports: Dict[str, Any] = {}
-        for agent in [
-            "base",
-            "fraud_type_A",
-            "fraud_type_B",
-            "fraud_type_C",
-            "fraud_type_D",
-            "fraud_type_E",
-            "fraud_type_F",
-        ]:
-            report = run_agent(
-                agent,
-                workpaper,
-                llm,
-                tavily_client=tavily_client,
-                react_retry=True,
-            )
-            reports[agent] = report
-            with open(output_dir / "agent_reports" / f"{agent}.json", "w", encoding="utf-8") as f:
-                json.dump(report, f, ensure_ascii=False, indent=2)
-            _update_run(run_id, {agent: report})
-            log_step(output_dir, f"agent:{agent}", report)
 
-        if enable_defense:
-            defense_report = run_agent(
-                "defense",
-                workpaper,
-                llm,
-                tavily_client=tavily_client,
-                react_retry=True,
-            )
-            reports["defense"] = defense_report
-            with open(output_dir / "agent_reports" / "defense.json", "w", encoding="utf-8") as f:
-                json.dump(defense_report, f, ensure_ascii=False, indent=2)
-            _update_run(run_id, {"defense": defense_report})
-            log_step(output_dir, "agent:defense", defense_report)
+        def _on_agent_result(agent_name: str, report: Dict[str, Any]) -> None:
+            with open(output_dir / "agent_reports" / f"{agent_name}.json", "w", encoding="utf-8") as f:
+                json.dump(report, f, ensure_ascii=False, indent=2)
+            _update_run(run_id, {agent_name: report})
+            log_step(output_dir, f"agent:{agent_name}", report)
+
+        reports = run_agents_suite(
+            workpaper,
+            llm,
+            tavily_client=tavily_client,
+            enable_defense=enable_defense,
+            react_retry=True,
+            max_concurrency=agent_max_concurrency,
+            on_agent_result=_on_agent_result,
+        )
 
         final_report = llm.generate_json(
             "你是裁决分析智能体，负责综合判断舞弊风险等级。",

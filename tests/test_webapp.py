@@ -358,18 +358,34 @@ def test_run_pipeline_stream_prefers_highest_scored_financial_text(monkeypatch, 
     monkeypatch.setattr(web_app, "apply_company_profile_hint", lambda workpaper, *_args, **_kwargs: workpaper)
     monkeypatch.setattr(web_app, "sanitize_company_scope_fields", lambda workpaper, *_args, **_kwargs: workpaper)
     monkeypatch.setattr(web_app, "react_enrich_workpaper", lambda workpaper, *_args, **_kwargs: workpaper)
-    monkeypatch.setattr(
-        web_app,
-        "run_agent",
-        lambda *_args, **_kwargs: {
-            "risk_level": "low",
-            "risk_points": [],
-            "evidence": [],
-            "reasoning_summary": "",
-            "suggestions": [],
-            "confidence": 0.1,
-        },
-    )
+    def fake_run_agents_suite(*_args, enable_defense=True, on_agent_result=None, **_kwargs):
+        names = [
+            "base",
+            "fraud_type_A",
+            "fraud_type_B",
+            "fraud_type_C",
+            "fraud_type_D",
+            "fraud_type_E",
+            "fraud_type_F",
+        ]
+        if enable_defense:
+            names.append("defense")
+        reports = {}
+        for name in names:
+            report = {
+                "risk_level": "low",
+                "risk_points": [],
+                "evidence": [],
+                "reasoning_summary": "",
+                "suggestions": [],
+                "confidence": 0.1,
+            }
+            reports[name] = report
+            if on_agent_result:
+                on_agent_result(name, report)
+        return reports
+
+    monkeypatch.setattr(web_app, "run_agents_suite", fake_run_agents_suite)
     monkeypatch.setattr(web_app, "log_step", lambda *_args, **_kwargs: None)
 
     run_id = "run-score-test"

@@ -1,4 +1,5 @@
 import json
+import time
 from src.orchestrator import run_pipeline
 from tests.helpers.fake_llm import FakeLLM
 
@@ -176,20 +177,37 @@ def test_run_pipeline_prefers_stronger_financial_text(monkeypatch, tmp_path):
     def fake_build_workpaper_from_text(*_args, **_kwargs):
         return {"company_profile": "TestCo"}
 
-    def fake_run_agent(*_args, **_kwargs):
-        return {
-            "risk_level": "low",
-            "risk_points": [],
-            "evidence": [],
-            "reasoning_summary": "",
-            "suggestions": [],
-            "confidence": 0.1,
-        }
+    def fake_run_agents_suite(*_args, enable_defense=True, on_agent_result=None, **_kwargs):
+        names = [
+            "base",
+            "fraud_type_A",
+            "fraud_type_B",
+            "fraud_type_C",
+            "fraud_type_D",
+            "fraud_type_E",
+            "fraud_type_F",
+        ]
+        if enable_defense:
+            names.append("defense")
+        reports = {}
+        for name in names:
+            report = {
+                "risk_level": "low",
+                "risk_points": [],
+                "evidence": [],
+                "reasoning_summary": "",
+                "suggestions": [],
+                "confidence": 0.1,
+            }
+            reports[name] = report
+            if on_agent_result:
+                on_agent_result(name, report)
+        return reports
 
     monkeypatch.setattr(orchestrator, "extract_pdf_text_chunks", fake_extract_pdf_text_chunks)
     monkeypatch.setattr(orchestrator, "extract_financials_with_fallback", fake_extract_financials_with_fallback)
     monkeypatch.setattr(orchestrator, "build_workpaper_from_text", fake_build_workpaper_from_text)
-    monkeypatch.setattr(orchestrator, "run_agent", fake_run_agent)
+    monkeypatch.setattr(orchestrator, "run_agents_suite", fake_run_agents_suite)
     monkeypatch.setattr(orchestrator, "summarize_text", lambda *_args, **_kwargs: "summary")
 
     llm = FakeLLM(
@@ -214,3 +232,64 @@ def test_run_pipeline_prefers_stronger_financial_text(monkeypatch, tmp_path):
     )
 
     assert "Consolidated Statements of Operations" in captured["text"]
+
+
+def test_run_pipeline_parallelizes_agent_stage(monkeypatch, tmp_path):
+    from src import orchestrator
+    from src import agents as agents_module
+
+    def fake_extract_financials_with_fallback(*_args, **_kwargs):
+        return {
+            "income_statement": {},
+            "balance_sheet": {},
+            "cash_flow": {},
+            "market_data": {},
+        }
+
+    def fake_build_workpaper_from_text(*_args, **_kwargs):
+        return {"company_profile": "Example Co."}
+
+    def fake_run_agent(*_args, **_kwargs):
+        time.sleep(0.12)
+        return {
+            "risk_level": "low",
+            "risk_points": [],
+            "evidence": [],
+            "reasoning_summary": "",
+            "suggestions": [],
+            "confidence": 0.1,
+        }
+
+    monkeypatch.setattr(orchestrator, "summarize_text", lambda *_args, **_kwargs: "summary")
+    monkeypatch.setattr(orchestrator, "extract_company_name", lambda *_args, **_kwargs: "Example Co.")
+    monkeypatch.setattr(orchestrator, "extract_financials_with_fallback", fake_extract_financials_with_fallback)
+    monkeypatch.setattr(orchestrator, "build_context_pack", lambda *_args, **_kwargs: {"company_name": "Example Co."})
+    monkeypatch.setattr(orchestrator, "build_context_capsule", lambda *_args, **_kwargs: "capsule")
+    monkeypatch.setattr(orchestrator, "build_workpaper_from_text", fake_build_workpaper_from_text)
+    monkeypatch.setattr(orchestrator, "sanitize_company_scope_fields", lambda wp, *_args, **_kwargs: wp)
+    monkeypatch.setattr(orchestrator, "react_enrich_workpaper", lambda wp, *_args, **_kwargs: wp)
+    monkeypatch.setattr(agents_module, "run_agent", fake_run_agent)
+
+    class FinalOnlyLLM:
+        def generate_json(self, *_args, **_kwargs):
+            return {
+                "overall_risk_level": "low",
+                "accepted_points": [],
+                "rejected_points": [],
+                "rationale": "ok",
+                "uncertainty": "low",
+                "suggestions": [],
+            }
+
+    start = time.perf_counter()
+    orchestrator.run_pipeline(
+        input_texts=["sample text"],
+        pdf_paths=None,
+        llm=FinalOnlyLLM(),
+        output_dir=tmp_path,
+        enable_defense=False,
+    )
+    elapsed = time.perf_counter() - start
+
+    # 7 agents * 0.12s = 0.84s if strictly sequential.
+    assert elapsed < 0.70

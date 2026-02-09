@@ -185,6 +185,35 @@ def test_run_agent_react_retries_when_missing():
     assert report["_react_attempts"] == 1
 
 
+def test_run_agent_flags_when_research_required_but_tavily_unavailable():
+    llm = SpyLLM(
+        {
+            "risk_level": "medium",
+            "risk_points": ["需要补充证据。"],
+            "evidence": [],
+            "reasoning_summary": "证据不足。",
+            "suggestions": [],
+            "confidence": 0.2,
+            "research_plan": {
+                "need_autonomous_research": True,
+                "minimum_rounds": 1,
+                "follow_up_queries": ["Example Co annual report footnote disclosure"],
+                "reason": "evidence is insufficient",
+            },
+        }
+    )
+    workpaper = {
+        "company_profile": "Example Co.",
+        "fraud_type_A_block": "A-block",
+    }
+
+    report = run_agent("fraud_type_A", workpaper, llm, tavily_client=None, react_retry=True)
+
+    assert report["_react_attempts"] == 0
+    assert report["_react_blocked_reason"] == "tavily_disabled_or_missing_api_key"
+    assert report["_react_required_rounds"] >= 1
+
+
 def test_run_agent_includes_context_capsule():
     llm = SpyLLM(
         {

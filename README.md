@@ -18,6 +18,7 @@ ForenSight 是一个面向财务舞弊研判的多智能体证据推理原型系
   - `fraud_type_A` 至 `fraud_type_F` 六类舞弊专项智能体
   - `defense` 辩护智能体（可选）
   - 最终 `judge` 裁决输出
+- 智能体并发执行：核心智能体支持并发运行，显著缩短整体等待时间（可配置并发度）
 - 自主外部调查（ReAct）：当证据不足时，智能体会按 `research_plan` 发起多轮外部检索（可接 Tavily）
 - 同步/异步运行：同步直接回包，异步通过 `run_id` 轮询状态
 - 可追踪产物：每次运行落地 `workpaper.json`、各智能体报告和 `final_report.json`
@@ -76,6 +77,7 @@ cp .env.example .env
 - `TAVILY_API_KEY`（启用外部检索增强）
 - `LLM_TIMEOUT_SECONDS`
 - `LLM_MAX_RETRIES`
+- `AGENT_MAX_CONCURRENCY`（默认 `4`，建议 `2-8`）
 
 ### 4) 启动服务
 
@@ -142,6 +144,7 @@ uvicorn src.web_app:app --reload
 | `LLM_BASE_URL` | 否 | `https://api.deepseek.com` | DeepSeek API 基地址 |
 | `LLM_TIMEOUT_SECONDS` | 否 | `90` | 单次请求超时（秒） |
 | `LLM_MAX_RETRIES` | 否 | `2` | LLM 请求重试次数 |
+| `AGENT_MAX_CONCURRENCY` | 否 | `4` | 智能体并发数上限（测试桩模式自动退回串行） |
 | `TAVILY_API_KEY` | 否 | 空 | 外部检索增强（可选） |
 | `DEBUG` | 否 | `false` | 调试开关 |
 

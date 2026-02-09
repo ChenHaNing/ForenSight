@@ -1,6 +1,7 @@
 import json
 import re
-from typing import Dict, Any, List
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict, Any, List, Callable, Optional
 from .workpaper import filter_external_results_by_company
 
 
@@ -57,6 +58,16 @@ AGENT_INPUT_FIELD = {
     "fraud_type_F": "fraud_type_F_block",
     "defense": "all",
 }
+
+CORE_AGENT_ORDER = [
+    "base",
+    "fraud_type_A",
+    "fraud_type_B",
+    "fraud_type_C",
+    "fraud_type_D",
+    "fraud_type_E",
+    "fraud_type_F",
+]
 
 
 MAX_REACT_RETRY_ROUNDS = 2
@@ -120,6 +131,10 @@ def run_agent(
     should_retry = policy["need_autonomous_research"]
     required_min_rounds = max(max_retries if should_retry else 0, policy["minimum_rounds"])
 
+    if react_retry and should_retry and not tavily_enabled:
+        report["_react_blocked_reason"] = "tavily_disabled_or_missing_api_key"
+        report["_react_required_rounds"] = required_min_rounds
+
     if react_retry and should_retry and tavily_enabled:
         while react_attempts < MAX_REACT_RETRY_ROUNDS and (
             react_attempts < required_min_rounds or policy["need_autonomous_research"]
@@ -142,6 +157,59 @@ def run_agent(
                 break
     report["_react_attempts"] = react_attempts
     return report
+
+
+def run_agents_suite(
+    workpaper: Dict[str, Any],
+    llm,
+    tavily_client=None,
+    enable_defense: bool = True,
+    react_retry: bool = True,
+    max_retries: int = 1,
+    max_concurrency: int = 4,
+    on_agent_result: Optional[Callable[[str, Dict[str, Any]], None]] = None,
+) -> Dict[str, Dict[str, Any]]:
+    agent_order = CORE_AGENT_ORDER[:] + (["defense"] if enable_defense else [])
+    if not agent_order:
+        return {}
+
+    if max_concurrency < 1:
+        max_concurrency = 1
+    if getattr(llm, "_responses", None) is not None:
+        max_concurrency = 1
+    max_workers = min(max_concurrency, len(agent_order))
+
+    reports: Dict[str, Dict[str, Any]] = {}
+
+    def _run_single(agent_name: str) -> Dict[str, Any]:
+        return run_agent(
+            agent_name,
+            workpaper,
+            llm,
+            tavily_client=tavily_client,
+            react_retry=react_retry,
+            max_retries=max_retries,
+        )
+
+    if max_workers == 1:
+        for agent_name in agent_order:
+            report = _run_single(agent_name)
+            reports[agent_name] = report
+            if on_agent_result:
+                on_agent_result(agent_name, report)
+    else:
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_map = {
+                executor.submit(_run_single, agent_name): agent_name for agent_name in agent_order
+            }
+            for future in as_completed(future_map):
+                agent_name = future_map[future]
+                report = future.result()
+                reports[agent_name] = report
+                if on_agent_result:
+                    on_agent_result(agent_name, report)
+
+    return {agent_name: reports[agent_name] for agent_name in agent_order if agent_name in reports}
 
 
 def _build_agent_content(agent_name: str, workpaper: Dict[str, Any]) -> Dict[str, Any]:
