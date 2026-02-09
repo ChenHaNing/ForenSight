@@ -259,6 +259,40 @@ def test_react_enrich_workpaper_fills_missing_fields():
     assert tavily.queries
 
 
+def test_react_enrich_workpaper_research_rounds_are_capped_at_two():
+    class PlanLoopLLM:
+        def __init__(self):
+            self.calls = 0
+
+        def generate_json(self, system_prompt, user_prompt, schema=None, temperature=0.2):
+            self.calls += 1
+            if self.calls % 2 == 1:
+                return {
+                    "need_autonomous_research": True,
+                    "minimum_rounds": 4,
+                    "target_fields": ["company_profile"],
+                    "follow_up_queries": ["Example Co. annual report disclosure"],
+                    "reason": "need more evidence",
+                }
+            return {"company_profile": "Example Co."}
+
+    llm = PlanLoopLLM()
+    workpaper = {
+        "company_profile": "",
+        "industry_comparables": "",
+        "industry_benchmark_summary": "",
+        "external_search_summary": "",
+    }
+    tavily = FakeTavily(
+        [
+            {"title": "Company Profile", "url": "https://c.example", "content": "Profile"},
+        ]
+    )
+    updated = react_enrich_workpaper(workpaper, llm, tavily, max_retries=5)
+    assert updated["company_profile"] == "Example Co."
+    assert llm.calls == 4
+
+
 def test_build_context_capsule_contains_company_name():
     pack = {
         "company_name": "APPLE INC.",

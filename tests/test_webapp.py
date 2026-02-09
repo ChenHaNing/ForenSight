@@ -270,6 +270,26 @@ def test_frontend_report_visual_hooks_present():
     assert "function formatReactAttempts" in js_text
 
 
+def test_frontend_provider_model_selector_present():
+    from src.web_app import create_app
+
+    app = create_app(llm_factory=lambda *_args, **_kwargs: FakeLLM(_build_fake_responses()))
+    client = TestClient(app)
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.text
+    assert '<select id="provider"' in html
+    assert '<option value="zhipu"' in html
+    assert '<option value="deepseek"' in html
+    assert '<select id="model"' in html
+
+    root = Path(__file__).resolve().parents[1]
+    js_text = (root / "static" / "app.js").read_text(encoding="utf-8")
+    assert "const PROVIDER_PRESETS =" in js_text
+    assert "function syncProviderPresetUI" in js_text
+
+
 def test_api_run_sync_uses_unique_output_dir_even_same_second(monkeypatch):
     from src import web_app
 

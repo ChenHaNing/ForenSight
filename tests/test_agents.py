@@ -371,3 +371,93 @@ def test_run_agent_related_party_disclosure_requires_two_retries_before_give_up(
     assert report["_react_attempts"] == 2
     assert "关联方交易披露不完整" in " ".join(report.get("risk_points", []))
     assert any(("关联方交易" in q) or ("related party" in q.lower()) for q in tavily.queries)
+
+
+def test_run_agent_react_retry_is_capped_at_two_rounds():
+    llm = SequenceLLM(
+        [
+            {
+                "risk_level": "medium",
+                "risk_points": ["需要持续补充证据。"],
+                "evidence": ["证据不足。"],
+                "reasoning_summary": "第一轮证据不足。",
+                "suggestions": [],
+                "confidence": 0.3,
+                "research_plan": {
+                    "need_autonomous_research": True,
+                    "minimum_rounds": 4,
+                    "follow_up_queries": ["Apple annual report footnote disclosure"],
+                    "reason": "need more evidence",
+                },
+            },
+            {
+                "risk_level": "medium",
+                "risk_points": ["继续调查。"],
+                "evidence": ["证据仍不足。"],
+                "reasoning_summary": "第一轮补充后仍不足。",
+                "suggestions": [],
+                "confidence": 0.35,
+                "research_plan": {
+                    "need_autonomous_research": True,
+                    "minimum_rounds": 4,
+                    "follow_up_queries": ["Apple related party transactions DEF 14A"],
+                    "reason": "still insufficient",
+                },
+            },
+            {
+                "risk_level": "medium",
+                "risk_points": ["继续调查。"],
+                "evidence": ["证据仍不足。"],
+                "reasoning_summary": "第二轮补充后仍不足。",
+                "suggestions": [],
+                "confidence": 0.38,
+                "research_plan": {
+                    "need_autonomous_research": True,
+                    "minimum_rounds": 4,
+                    "follow_up_queries": ["Apple regulator enforcement disclosure"],
+                    "reason": "still insufficient",
+                },
+            },
+            {
+                "risk_level": "medium",
+                "risk_points": ["继续调查。"],
+                "evidence": ["证据仍不足。"],
+                "reasoning_summary": "第三轮补充后仍不足。",
+                "suggestions": [],
+                "confidence": 0.4,
+                "research_plan": {
+                    "need_autonomous_research": True,
+                    "minimum_rounds": 4,
+                    "follow_up_queries": [],
+                    "reason": "still insufficient",
+                },
+            },
+            {
+                "risk_level": "medium",
+                "risk_points": ["继续调查。"],
+                "evidence": ["证据仍不足。"],
+                "reasoning_summary": "第四轮补充后仍不足。",
+                "suggestions": [],
+                "confidence": 0.42,
+                "research_plan": {
+                    "need_autonomous_research": True,
+                    "minimum_rounds": 4,
+                    "follow_up_queries": [],
+                    "reason": "still insufficient",
+                },
+            },
+        ]
+    )
+    workpaper = {
+        "company_profile": "Apple Inc.",
+        "fraud_type_B_block": "净利润操纵线索待核实。",
+        "industry_comparables": "已披露",
+    }
+    tavily = TraceTavily(
+        [
+            {"title": "Apple disclosure", "url": "https://a.example", "content": "disclosure"},
+        ]
+    )
+    report = run_agent("fraud_type_B", workpaper, llm, tavily_client=tavily, react_retry=True, max_retries=5)
+    assert llm.calls == 3
+    assert report["_react_attempts"] == 2

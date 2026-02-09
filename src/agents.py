@@ -59,7 +59,7 @@ AGENT_INPUT_FIELD = {
 }
 
 
-MAX_REACT_RETRY_ROUNDS = 4
+MAX_REACT_RETRY_ROUNDS = 2
 
 
 def run_agent(
@@ -85,7 +85,7 @@ def run_agent(
         "5) 若为关注类特征，需说明为何需要进一步核查。\n"
         "6) 必须给出research_plan：\n"
         "   - need_autonomous_research: 是否需要继续自主外部调查；\n"
-        "   - minimum_rounds: 建议最少补充调查轮次(0-4)；\n"
+        "   - minimum_rounds: 建议最少补充调查轮次(0-2)；\n"
         "   - follow_up_queries: 下一轮建议检索语句列表；\n"
         "   - reason: 判定理由。\n"
     )

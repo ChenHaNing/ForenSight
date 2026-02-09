@@ -172,7 +172,7 @@ WORKPAPER_RESEARCH_PLAN_SCHEMA = {
     ],
 }
 
-MAX_WORKPAPER_RESEARCH_ROUNDS = 4
+MAX_WORKPAPER_RESEARCH_ROUNDS = 2
 
 
 def react_enrich_workpaper(
@@ -254,7 +254,7 @@ def _request_workpaper_research_plan(workpaper: Dict[str, Any], llm, attempts: i
         "请先判断工作底稿当前完整性，再给出research_plan。\n"
         "要求：\n"
         "1) need_autonomous_research: 是否继续调查；\n"
-        "2) minimum_rounds: 建议最少调查轮次(0-4)；\n"
+        "2) minimum_rounds: 建议最少调查轮次(0-2)；\n"
         f"3) target_fields: 仅可从 {ENRICHABLE_WORKPAPER_FIELDS} 中选择；\n"
         "4) follow_up_queries: 给出可执行检索语句；\n"
         "5) reason: 说明理由。\n\n"

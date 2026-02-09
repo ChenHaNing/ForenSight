@@ -29,3 +29,32 @@ def test_llm_client_retries_on_timeout():
     result = client.generate_json("sys", "user")
     assert result["ok"] is True
     assert calls["count"] == 3
+
+
+def test_llm_client_supports_zhipu_chat_endpoint():
+    calls = {"url": None}
+
+    def fake_post(url, *_args, **_kwargs):
+        calls["url"] = url
+
+        class Resp:
+            def raise_for_status(self):
+                return None
+
+            def json(self):
+                return {"choices": [{"message": {"content": "{\"ok\": true}"}}]}
+
+        return Resp()
+
+    client = LLMClient(
+        provider="zhipu",
+        model="glm-4.7-flash",
+        api_key="key",
+        base_url="https://open.bigmodel.cn/api/paas/v4",
+        timeout=1,
+        max_retries=1,
+        post_fn=fake_post,
+    )
+    result = client.generate_json("sys", "user")
+    assert result["ok"] is True
+    assert calls["url"] == "https://open.bigmodel.cn/api/paas/v4/chat/completions"

@@ -7,6 +7,9 @@ const downloadWorkpaper = document.getElementById('download-workpaper');
 const reportFileInput = document.getElementById('report-file');
 const uploadStatusEl = document.getElementById('upload-status');
 const hasKey = document.body.dataset.hasKey === 'true';
+const providerEl = document.getElementById('provider');
+const modelEl = document.getElementById('model');
+const baseUrlEl = document.getElementById('base_url');
 
 const riskLevelEl = document.getElementById('risk-level');
 const acceptedPointsEl = document.getElementById('accepted-points');
@@ -36,13 +39,23 @@ const nodeMetaEls = {
 
 const steps = ['collect', 'base', 'agents', 'defense', 'judge'];
 const FRAUD_AGENTS = [
-  { key: 'fraud_type_A', title: '虚构交易类收入舞弊' },
-  { key: 'fraud_type_B', title: '净利润操纵舞弊' },
-  { key: 'fraud_type_C', title: '会计操纵收入舞弊' },
-  { key: 'fraud_type_D', title: '净资产舞弊' },
-  { key: 'fraud_type_E', title: '资金占用舞弊' },
-  { key: 'fraud_type_F', title: '特殊行业/业务模式' },
+  { key: 'fraud_type_A', title: '收入真实性与交易匹配分析' },
+  { key: 'fraud_type_B', title: '净利润质量与波动分析' },
+  { key: 'fraud_type_C', title: '收入确认与会计政策分析' },
+  { key: 'fraud_type_D', title: '资产质量与估值分析' },
+  { key: 'fraud_type_E', title: '资金往来与流动性分析' },
+  { key: 'fraud_type_F', title: '特殊行业/业务模式分析' },
 ];
+const PROVIDER_PRESETS = {
+  zhipu: {
+    models: ['glm-4.7-flash', 'glm-4.7', 'glm-4-flash'],
+    baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+  },
+  deepseek: {
+    models: ['deepseek-chat', 'deepseek-reasoner'],
+    baseUrl: 'https://api.deepseek.com',
+  },
+};
 const renderCache = new Map();
 let uploadedReportId = null;
 let uploadedReportKey = null;
@@ -125,6 +138,46 @@ function setTraceState(step, state) {
   if (state) {
     segment.classList.add(state);
   }
+}
+
+function normalizeProvider(provider) {
+  const normalized = String(provider || '')
+    .trim()
+    .toLowerCase();
+  return PROVIDER_PRESETS[normalized] ? normalized : 'zhipu';
+}
+
+function syncProviderPresetUI({ keepModel = false, keepBaseUrl = false } = {}) {
+  if (!providerEl || !modelEl || !baseUrlEl) return;
+
+  const provider = normalizeProvider(providerEl.value);
+  providerEl.value = provider;
+  const preset = PROVIDER_PRESETS[provider];
+
+  const currentModel = String(modelEl.value || '').trim();
+  const candidateModels = [...preset.models];
+  const preferredModel = keepModel ? currentModel : '';
+  if (preferredModel && !candidateModels.includes(preferredModel)) {
+    candidateModels.unshift(preferredModel);
+  }
+
+  modelEl.innerHTML = '';
+  candidateModels.forEach((modelName) => {
+    const option = document.createElement('option');
+    option.value = modelName;
+    option.textContent = modelName;
+    modelEl.appendChild(option);
+  });
+
+  if (preferredModel && candidateModels.includes(preferredModel)) {
+    modelEl.value = preferredModel;
+  } else {
+    modelEl.value = candidateModels[0] || '';
+  }
+
+  const currentBaseUrl = String(baseUrlEl.value || '').trim();
+  const shouldKeepBaseUrl = keepBaseUrl && Boolean(currentBaseUrl);
+  baseUrlEl.value = shouldKeepBaseUrl ? currentBaseUrl : preset.baseUrl;
 }
 
 function syncSummaryCardHeights() {
@@ -346,12 +399,12 @@ function renderWorkpaper(workpaper) {
     ['外部检索摘要', workpaper.external_search_summary],
     ['财务指标', workpaper.financial_metrics || '—'],
     ['指标缺失说明', workpaper.metrics_notes || []],
-    ['虚构交易类线索', workpaper.fraud_type_A_block],
-    ['净利润操纵线索', workpaper.fraud_type_B_block],
-    ['会计操纵收入线索', workpaper.fraud_type_C_block],
-    ['净资产舞弊线索', workpaper.fraud_type_D_block],
-    ['资金占用线索', workpaper.fraud_type_E_block],
-    ['特殊行业/业务模式线索', workpaper.fraud_type_F_block],
+    ['收入真实性线索', workpaper.fraud_type_A_block],
+    ['利润质量线索', workpaper.fraud_type_B_block],
+    ['收入确认与会计政策线索', workpaper.fraud_type_C_block],
+    ['资产质量线索', workpaper.fraud_type_D_block],
+    ['资金往来线索', workpaper.fraud_type_E_block],
+    ['行业/业务模式线索', workpaper.fraud_type_F_block],
   ];
   const html = buildTable(['字段', '内容'], sections);
   const changed = setHTMLIfChanged(workpaperOutputEl, html, 'workpaper:data');
@@ -413,9 +466,9 @@ function renderFinalReport(targetEl, report) {
   }
   const rows = [
     ['总体风险', report.overall_risk_level || '—'],
-    ['采纳点', report.accepted_points || []],
-    ['驳回点', report.rejected_points || []],
-    ['裁决依据', report.rationale || '—'],
+    ['重点关注点', report.accepted_points || []],
+    ['暂未采纳点', report.rejected_points || []],
+    ['结论依据', report.rationale || '—'],
   ];
   const html = buildTable(['字段', '内容'], rows);
   const changed = setHTMLIfChanged(targetEl, html, 'final:data');
@@ -497,9 +550,9 @@ async function runAnalysis() {
 
   try {
     const payload = {
-      provider: document.getElementById('provider').value,
-      model: document.getElementById('model').value,
-      base_url: document.getElementById('base_url').value,
+      provider: providerEl.value,
+      model: modelEl.value,
+      base_url: baseUrlEl.value,
       enable_defense: document.getElementById('enable_defense').checked,
     };
 
@@ -510,7 +563,7 @@ async function runAnalysis() {
 
     activateStep(steps[0]);
     if (!payload.enable_defense) {
-      const disabledDefenseHtml = buildTable(['字段', '内容'], [['辩护智能体', '已禁用']]);
+      const disabledDefenseHtml = buildTable(['字段', '内容'], [['复核智能体', '已禁用']]);
       const changed = setHTMLIfChanged(defenseOutputEl, disabledDefenseHtml, 'defense:disabled');
       if (changed) flashUpdate(defenseOutputEl);
     }
@@ -590,7 +643,7 @@ async function runAnalysis() {
       if (stepsData.defense) {
         activateStep('defense');
         completeStep('defense');
-        const defenseHtml = buildAgentHtml('辩护分析智能体', stepsData.defense);
+        const defenseHtml = buildAgentHtml('复核分析智能体', stepsData.defense);
         const changed = setHTMLIfChanged(defenseOutputEl, defenseHtml, 'defense:data');
         if (changed) flashUpdate(defenseOutputEl);
         updateAgentCard('defense', stepsData.defense);
@@ -678,6 +731,10 @@ if (!hasKey) {
   runBtn.textContent = '请先配置 API Key';
   setStatus('未配置');
 } else {
+  if (providerEl && modelEl && baseUrlEl) {
+    syncProviderPresetUI({ keepModel: true, keepBaseUrl: true });
+    providerEl.addEventListener('change', () => syncProviderPresetUI());
+  }
   if (reportFileInput && uploadStatusEl) {
     reportFileInput.addEventListener('change', () => {
       uploadedReportId = null;

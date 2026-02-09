@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ForenSight（证镜）财务舞弊证据推理系统</title>
+  <title>ForenSight（证镜）财务分析与风险研判系统</title>
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body data-has-key="{{ 'true' if has_api_key else 'false' }}">
@@ -17,7 +17,7 @@
     <div class="brand">
       <div class="logo">ForenSight</div>
       <div>
-        <h1>ForenSight（证镜）财务舞弊证据推理系统</h1>
+        <h1>ForenSight（证镜）财务分析与风险研判系统</h1>
         <p>智能博弈 · 证据驱动 · 监管级呈现</p>
       </div>
     </div>
@@ -29,11 +29,16 @@
       <h2>运行配置</h2>
       <div class="form-group">
         <label>LLM Provider</label>
-        <input id="provider" type="text" value="{{ defaults.provider }}" />
+        <select id="provider">
+          <option value="zhipu" {% if defaults.provider == "zhipu" %}selected{% endif %}>zhipu</option>
+          <option value="deepseek" {% if defaults.provider == "deepseek" %}selected{% endif %}>deepseek</option>
+        </select>
       </div>
       <div class="form-group">
         <label>LLM Model</label>
-        <input id="model" type="text" value="{{ defaults.model }}" />
+        <select id="model">
+          <option value="{{ defaults.model }}" selected>{{ defaults.model }}</option>
+        </select>
       </div>
       <div class="form-group">
         <label>LLM Base URL</label>
@@ -44,7 +49,7 @@
           <input id="enable_defense" type="checkbox" checked />
           <span class="slider"></span>
         </label>
-        <span>启用辩护智能体</span>
+        <span>启用复核智能体</span>
       </div>
       <div class="form-group">
         <label>上传财报（ODF/PDF）</label>
@@ -64,8 +69,8 @@
     <section class="content">
       <section class="hero">
         <div>
-          <h2>多智能体对抗推理可视化</h2>
-          <p>通过指控、辩护、裁决三段式推理，将舞弊风险收敛为可解释的监管级报告。</p>
+          <h2>多智能体财务分析可视化</h2>
+          <p>通过识别、复核、综合评估三段式推理，将财务风险收敛为可解释的专业报告。</p>
         </div>
         <div class="hero-actions">
           <button class="ghost" id="download-final" disabled>下载最终报告</button>
@@ -77,7 +82,7 @@
         <div class="card workflow-canvas">
           <div class="workflow-head">
             <h3>Agent 工作流画布</h3>
-            <p>按「汇聚 -> 识别 -> 指控 -> 辩护 -> 裁决」顺序流式传导</p>
+            <p>按「汇聚 -> 识别 -> 专题分析 -> 复核 -> 综合评估」顺序流式传导</p>
           </div>
           <ul id="timeline" class="wf-steps">
             <li class="wf-node" data-step="collect">
@@ -89,15 +94,15 @@
               <span class="node-meta" id="node-meta-base">等待中</span>
             </li>
             <li class="wf-node" data-step="agents">
-              <span class="node-title">指向型舞弊智能体</span>
+              <span class="node-title">专题风险分析智能体</span>
               <span class="node-meta" id="node-meta-agents">等待中</span>
             </li>
             <li class="wf-node" data-step="defense">
-              <span class="node-title">辩护分析智能体</span>
+              <span class="node-title">复核分析智能体</span>
               <span class="node-meta" id="node-meta-defense">等待中</span>
             </li>
             <li class="wf-node" data-step="judge">
-              <span class="node-title">裁决智能体输出</span>
+              <span class="node-title">综合评估智能体输出</span>
               <span class="node-meta" id="node-meta-judge">等待中</span>
             </li>
           </ul>
@@ -123,22 +128,22 @@
               <div class="step-body" id="base-output">—</div>
             </details>
             <details data-step="agents">
-              <summary>指向型舞弊智能体</summary>
+              <summary>专题风险分析智能体</summary>
               <div class="step-body" id="agent-output">—</div>
             </details>
             <details data-step="defense">
-              <summary>辩护分析智能体</summary>
+              <summary>复核分析智能体</summary>
               <div class="step-body" id="defense-output">—</div>
             </details>
             <details data-step="judge">
-              <summary>裁决智能体输出</summary>
+              <summary>综合评估智能体输出</summary>
               <div class="step-body" id="final-output">—</div>
             </details>
           </div>
         </div>
 
         <div class="card arena workflow-arena">
-          <h3>多智能体对抗棋盘</h3>
+          <h3>多智能体协同看板</h3>
           <div class="agents" id="agents">
             <div class="agent" data-agent="base" data-step-group="base">
               <h4>基础风险智能体</h4>
@@ -146,42 +151,42 @@
               <div class="body"></div>
             </div>
             <div class="agent" data-agent="fraud_type_A" data-step-group="agents">
-              <h4>虚构交易类收入舞弊</h4>
+              <h4>收入真实性与交易匹配分析</h4>
               <p class="status">等待中</p>
               <div class="body"></div>
             </div>
             <div class="agent" data-agent="fraud_type_B" data-step-group="agents">
-              <h4>净利润操纵舞弊</h4>
+              <h4>净利润质量与波动分析</h4>
               <p class="status">等待中</p>
               <div class="body"></div>
             </div>
             <div class="agent" data-agent="fraud_type_C" data-step-group="agents">
-              <h4>会计操纵收入舞弊</h4>
+              <h4>收入确认与会计政策分析</h4>
               <p class="status">等待中</p>
               <div class="body"></div>
             </div>
             <div class="agent" data-agent="fraud_type_D" data-step-group="agents">
-              <h4>净资产舞弊</h4>
+              <h4>资产质量与估值分析</h4>
               <p class="status">等待中</p>
               <div class="body"></div>
             </div>
             <div class="agent" data-agent="fraud_type_E" data-step-group="agents">
-              <h4>资金占用舞弊</h4>
+              <h4>资金往来与流动性分析</h4>
               <p class="status">等待中</p>
               <div class="body"></div>
             </div>
             <div class="agent" data-agent="fraud_type_F" data-step-group="agents">
-              <h4>特殊行业/业务模式</h4>
+              <h4>特殊行业/业务模式分析</h4>
               <p class="status">等待中</p>
               <div class="body"></div>
             </div>
             <div class="agent" data-agent="defense" data-step-group="defense">
-              <h4>辩护分析智能体</h4>
+              <h4>复核分析智能体</h4>
               <p class="status">等待中</p>
               <div class="body"></div>
             </div>
             <div class="agent highlight" data-agent="judge" data-step-group="judge">
-              <h4>裁决智能体</h4>
+              <h4>综合评估智能体</h4>
               <p class="status">等待中</p>
               <div class="body"></div>
             </div>
@@ -191,27 +196,27 @@
 
       <section class="grid report-row">
         <div class="card report">
-          <h3>综合裁决报告</h3>
+          <h3>综合分析报告</h3>
           <div class="report-grid">
             <div class="risk-level-card">
               <p class="label report-subtitle">总体风险等级</p>
               <p class="value risk-level-value" id="risk-level">—</p>
             </div>
             <div class="report-block">
-              <p class="label report-subtitle">接受的风险点</p>
+              <p class="label report-subtitle">重点关注风险点</p>
               <ul id="accepted-points"></ul>
             </div>
             <div class="report-block">
-              <p class="label report-subtitle">驳回的风险点</p>
+              <p class="label report-subtitle">暂未采纳风险点</p>
               <ul id="rejected-points"></ul>
             </div>
             <div class="report-block">
-              <p class="label report-subtitle">监管建议</p>
+              <p class="label report-subtitle">改进建议</p>
               <ul id="suggestions"></ul>
             </div>
           </div>
           <div class="report-note">
-            <p><strong>裁决依据</strong></p>
+            <p><strong>结论依据</strong></p>
             <p id="rationale">—</p>
             <p class="muted" id="uncertainty">—</p>
           </div>

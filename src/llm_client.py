@@ -30,18 +30,34 @@ class LLMClient:
         schema: Optional[Dict[str, Any]] = None,
         temperature: float = 0.2,
     ) -> Dict[str, Any]:
-        if self.provider.lower() == "deepseek":
-            return self._deepseek_chat(system_prompt, user_prompt, schema, temperature)
+        provider = self.provider.lower().strip()
+        if provider == "deepseek":
+            return self._chat_completion(
+                endpoint_path="/v1/chat/completions",
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                schema=schema,
+                temperature=temperature,
+            )
+        if provider in {"zhipu", "glm", "bigmodel"}:
+            return self._chat_completion(
+                endpoint_path="/chat/completions",
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                schema=schema,
+                temperature=temperature,
+            )
         raise ValueError(f"Unsupported provider: {self.provider}")
 
-    def _deepseek_chat(
+    def _chat_completion(
         self,
+        endpoint_path: str,
         system_prompt: str,
         user_prompt: str,
         schema: Optional[Dict[str, Any]],
         temperature: float,
     ) -> Dict[str, Any]:
-        url = f"{self.base_url}/v1/chat/completions"
+        url = f"{self.base_url}{endpoint_path}"
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
