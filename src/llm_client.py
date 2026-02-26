@@ -1,6 +1,7 @@
 import json
 import time
 from typing import Any, Dict, Optional, Callable
+from urllib.parse import urlparse, urlunparse
 import requests
 
 
@@ -18,7 +19,7 @@ class LLMClient:
         self.provider = provider
         self.model = model
         self.api_key = api_key
-        self.base_url = base_url.rstrip("/")
+        self.base_url = _normalize_base_url(base_url)
         self.timeout = timeout
         self.max_retries = max_retries
         self._post = post_fn or requests.post
@@ -98,3 +99,28 @@ def _safe_json_parse(text: str) -> Dict[str, Any]:
         if start == -1 or end == -1 or end <= start:
             raise
         return json.loads(text[start : end + 1])
+
+
+def _normalize_base_url(base_url: str) -> str:
+    """Accept root URL, /v1 URL, or full chat completions endpoint and normalize."""
+    raw = (base_url or "").strip()
+    if not raw:
+        return ""
+
+    parsed = urlparse(raw)
+    if not parsed.scheme or not parsed.netloc:
+        return raw.rstrip("/")
+
+    path = parsed.path.rstrip("/")
+    lowered = path.lower()
+    chat_suffix = "/chat/completions"
+    v1_suffix = "/v1"
+
+    if lowered.endswith(chat_suffix):
+        path = path[: -len(chat_suffix)]
+        lowered = path.lower()
+    if lowered.endswith(v1_suffix):
+        path = path[: -len(v1_suffix)]
+
+    normalized = parsed._replace(path=path, params="", query="", fragment="")
+    return urlunparse(normalized).rstrip("/")

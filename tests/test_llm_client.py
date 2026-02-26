@@ -41,3 +41,41 @@ def test_llm_client_rejects_non_deepseek_provider():
     )
     with pytest.raises(ValueError, match="Unsupported provider"):
         client.generate_json("sys", "user")
+
+
+@pytest.mark.parametrize(
+    "base_url",
+    [
+        "https://api.deepseek.com",
+        "https://api.deepseek.com/",
+        "https://api.deepseek.com/v1",
+        "https://api.deepseek.com/v1/",
+        "https://api.deepseek.com/v1/chat/completions",
+    ],
+)
+def test_llm_client_normalizes_base_url_for_chat_completion_endpoint(base_url):
+    called = {"url": ""}
+
+    def fake_post(url, **_kwargs):
+        called["url"] = url
+
+        class Resp:
+            def raise_for_status(self):
+                return None
+
+            def json(self):
+                return {"choices": [{"message": {"content": "{\"ok\": true}"}}]}
+
+        return Resp()
+
+    client = LLMClient(
+        provider="deepseek",
+        model="deepseek-chat",
+        api_key="key",
+        base_url=base_url,
+        post_fn=fake_post,
+    )
+
+    result = client.generate_json("sys", "user")
+    assert result["ok"] is True
+    assert called["url"] == "https://api.deepseek.com/v1/chat/completions"
