@@ -26,6 +26,9 @@ outputs/*
 !outputs/.gitkeep
 uploads/
 
+# Claude Code
+.claude/
+
 # Editor / IDE
 .vscode/
 .idea/

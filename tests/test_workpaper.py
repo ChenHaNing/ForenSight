@@ -1,10 +1,10 @@
 from src.workpaper import (
-    build_workpaper_from_text,
     WORKPAPER_SCHEMA,
-    react_enrich_workpaper,
-    build_context_pack,
     build_context_capsule,
+    build_context_pack,
+    build_workpaper_from_text,
     filter_external_results_by_company,
+    react_enrich_workpaper,
     sanitize_company_scope_fields,
 )
 from tests.helpers.fake_llm import FakeLLM
@@ -153,6 +153,38 @@ def test_build_workpaper_includes_revenue_context_and_company_hint():
     )
     assert "Net sales by product" in llm.user_prompt
     assert "Apple Inc." in llm.user_prompt
+
+
+def test_build_workpaper_truncates_long_revenue_context():
+    fake_response = {
+        "company_profile": "Example Co.",
+        "financial_summary": "Summary",
+        "risk_disclosures": "Risks",
+        "major_events": "Events",
+        "governance_signals": "Governance",
+        "industry_comparables": "Peers",
+        "announcements_summary": "Announcements",
+        "related_parties_summary": "Related parties",
+        "industry_benchmark_summary": "Benchmark",
+        "external_search_summary": "External summary",
+        "fraud_type_A_block": "A-block",
+        "fraud_type_B_block": "B-block",
+        "fraud_type_C_block": "C-block",
+        "fraud_type_D_block": "D-block",
+        "fraud_type_E_block": "E-block",
+        "fraud_type_F_block": "F-block",
+        "evidence": [{"quote": "Sample", "source": "p1"}],
+    }
+    llm = CaptureLLM(fake_response)
+    long_context = "R" * 100000
+    build_workpaper_from_text(
+        "sample text",
+        llm,
+        revenue_context=long_context,
+        company_name="Example Co.",
+    )
+    assert len(llm.user_prompt) < len(long_context)
+    assert "中间内容已截断" in llm.user_prompt
 
 
 def test_filter_external_results_by_company():
@@ -308,6 +340,34 @@ def test_build_context_capsule_contains_company_name():
     }
     capsule = build_context_capsule(pack)
     assert "APPLE INC." in capsule
+
+
+def test_build_context_pack_truncates_long_input():
+    class CaptureContextPackLLM:
+        def __init__(self):
+            self.user_prompt = ""
+
+        def generate_json(self, system_prompt, user_prompt, schema=None, temperature=0.2):
+            self.user_prompt = user_prompt
+            return {
+                "company_name": "Example Co.",
+                "business_overview": "Overview",
+                "segments": "Segments",
+                "geographies": "Geographies",
+                "revenue_mix": "Revenue mix",
+                "major_products": "Products",
+                "key_accounting_policies": "Policies",
+                "top_risk_factors": "Risks",
+                "governance_overview": "Governance",
+                "audit_controls": "Controls",
+            }
+
+    llm = CaptureContextPackLLM()
+    long_text = "A" * 120000
+    pack = build_context_pack(long_text, llm, company_name="Example Co.")
+    assert pack["company_name"] == "Example Co."
+    assert len(llm.user_prompt) < len(long_text)
+    assert "中间内容已截断" in llm.user_prompt
 
 
 def test_build_workpaper_replaces_null_metrics_with_computed_values():

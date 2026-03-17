@@ -1,5 +1,3 @@
-from typing import List
-
 
 SUMMARY_SCHEMA = {
     "type": "object",
@@ -8,7 +6,7 @@ SUMMARY_SCHEMA = {
 }
 
 
-def _chunk_text(text: str, chunk_size: int) -> List[str]:
+def _chunk_text(text: str, chunk_size: int) -> list[str]:
     chunks = []
     start = 0
     while start < len(text):
@@ -20,7 +18,7 @@ def _chunk_text(text: str, chunk_size: int) -> List[str]:
 
 def summarize_text(text: str, llm, chunk_size: int = 6000, max_chunks: int = 2) -> str:
     chunks = _chunk_text(text, chunk_size)[:max_chunks]
-    partials: List[str] = []
+    partials: list[str] = []
     for chunk in chunks:
         resp = llm.generate_json(
             "你是财务文档摘要助手。",

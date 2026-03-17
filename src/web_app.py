@@ -1,62 +1,62 @@
-import json
-import io
 import html
+import io
+import json
 import re
+import threading
 import time
 import uuid
-import threading
 import zipfile
 from pathlib import Path
-from typing import Callable, Optional, List, Dict, Any
+from typing import Any, Callable, Optional
 
-from fastapi import FastAPI, Request, HTTPException, UploadFile, File
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from pypdf import PdfReader
 
-from .config import load_config
-from .llm_client import LLMClient
-from .orchestrator import run_pipeline
-from .pdf_loader import extract_pdf_text_chunks, extract_financial_statement_text
-from .workpaper import (
-    build_workpaper_from_text,
-    react_enrich_workpaper,
-    apply_company_profile_hint,
-    build_context_pack,
-    build_context_capsule,
-    sanitize_company_scope_fields,
-)
 from .agents import run_agents_suite
-from .tavily_client import TavilyClient
+from .config import load_config
 from .financials import extract_financials_with_fallback
-from .summarizer import summarize_text
-from .run_logger import log_step
-from .pdf_loader import extract_company_name
+from .llm_client import LLMClient
+from .orchestrator import run_pipeline, summarize_reports_for_judge
 from .pdf_loader import (
-    extract_revenue_context,
+    extract_company_name,
     extract_context_text,
+    extract_financial_statement_text,
+    extract_pdf_text_chunks,
+    extract_revenue_context,
+    score_context_text,
     score_financial_text,
     score_revenue_text,
-    score_context_text,
 )
-
+from .run_logger import log_step
+from .summarizer import summarize_text
+from .tavily_client import TavilyClient
+from .workpaper import (
+    apply_company_profile_hint,
+    build_context_capsule,
+    build_context_pack,
+    build_workpaper_from_text,
+    react_enrich_workpaper,
+    sanitize_company_scope_fields,
+)
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 TEMPLATES_DIR = BASE_DIR / "templates"
 STATIC_DIR = BASE_DIR / "static"
 
-RUNS: Dict[str, Dict[str, Any]] = {}
+RUNS: dict[str, dict[str, Any]] = {}
 RUN_LOCK = threading.Lock()
 RUN_TIMEOUT_SECONDS = 300
-UPLOADED_REPORTS: Dict[str, Dict[str, Any]] = {}
+UPLOADED_REPORTS: dict[str, dict[str, Any]] = {}
 UPLOADED_REPORT_LOCK = threading.Lock()
 UPLOADED_REPORT_TTL_SECONDS = 60 * 60
 
 
 class RunRequest(BaseModel):
-    input_texts: Optional[List[str]] = None
+    input_texts: Optional[list[str]] = None
     uploaded_report_id: Optional[str] = None
     enable_defense: bool = True
     model: Optional[str] = None
@@ -74,7 +74,7 @@ def create_app(
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
     if use_default_factory:
-        def llm_factory(provider: str, model: str, api_key: str, base_url: str):
+        def llm_factory(provider: str, model: str, api_key: str, base_url: str) -> LLMClient:
             return LLMClient(
                 provider=provider,
                 model=model,
@@ -153,7 +153,7 @@ def create_app(
             workpaper_path = output_dir / "workpaper.json"
             workpaper = json.loads(workpaper_path.read_text(encoding="utf-8"))
 
-            agent_reports: Dict[str, Any] = {}
+            agent_reports: dict[str, Any] = {}
             for report_file in (output_dir / "agent_reports").glob("*.json"):
                 agent_reports[report_file.stem] = json.loads(report_file.read_text(encoding="utf-8"))
 
@@ -218,7 +218,7 @@ def create_app(
         return JSONResponse({"run_id": run_id})
 
     @app.post("/api/upload-report")
-    async def upload_report(file: UploadFile = File(...)):
+    async def upload_report(file: UploadFile = File(...)):  # noqa: B008
         filename = (file.filename or "").strip()
         if not filename:
             raise HTTPException(status_code=400, detail="缺少文件名")
@@ -230,7 +230,7 @@ def create_app(
         try:
             extracted_text = _extract_uploaded_report_text(filename, content)
         except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc))
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
         if len(extracted_text.strip()) < 20:
             raise HTTPException(status_code=400, detail="文档可提取内容过少，请检查文件格式")
@@ -300,9 +300,9 @@ def _extract_pdf_text_from_bytes(content: bytes) -> str:
     try:
         reader = PdfReader(io.BytesIO(content))
     except Exception as exc:
-        raise ValueError(f"PDF 解析失败: {exc}")
+        raise ValueError(f"PDF 解析失败: {exc}") from exc
 
-    parts: List[str] = []
+    parts: list[str] = []
     for page in reader.pages:
         text = (page.extract_text() or "").replace("\u0000", " ").strip()
         if text:
@@ -316,8 +316,8 @@ def _extract_odf_text_from_bytes(content: bytes) -> str:
             if "content.xml" not in zf.namelist():
                 raise ValueError("ODF 文件缺少 content.xml")
             raw_xml = zf.read("content.xml").decode("utf-8", errors="ignore")
-    except zipfile.BadZipFile:
-        raise ValueError("ODF 文件格式无效")
+    except zipfile.BadZipFile as exc:
+        raise ValueError("ODF 文件格式无效") from exc
 
     text = re.sub(r"<[^>]+>", " ", raw_xml)
     text = html.unescape(text)
@@ -327,8 +327,8 @@ def _extract_odf_text_from_bytes(content: bytes) -> str:
 
 def _run_pipeline_stream(
     run_id: str,
-    input_texts: Optional[List[str]],
-    pdf_paths: Optional[List[str]],
+    input_texts: Optional[list[str]],
+    pdf_paths: Optional[list[str]],
     llm,
     output_dir: Path,
     enable_defense: bool,
@@ -336,7 +336,7 @@ def _run_pipeline_stream(
     agent_max_concurrency: int = 4,
 ) -> None:
     try:
-        texts: List[str] = []
+        texts: list[str] = []
         financial_text = ""
         revenue_text = ""
         context_text = ""
@@ -417,9 +417,9 @@ def _run_pipeline_stream(
 
         _update_run(run_id, {"workpaper": workpaper})
 
-        reports: Dict[str, Any] = {}
+        reports: dict[str, Any] = {}
 
-        def _on_agent_result(agent_name: str, report: Dict[str, Any]) -> None:
+        def _on_agent_result(agent_name: str, report: dict[str, Any]) -> None:
             with open(output_dir / "agent_reports" / f"{agent_name}.json", "w", encoding="utf-8") as f:
                 json.dump(report, f, ensure_ascii=False, indent=2)
             _update_run(run_id, {agent_name: report})
@@ -435,28 +435,18 @@ def _run_pipeline_stream(
             on_agent_result=_on_agent_result,
         )
 
+        from .orchestrator import FINAL_SCHEMA
+
+        judge_system = (
+            "你是裁决分析智能体，负责综合判断舞弊风险等级。"
+            "请先汇总各智能体的主要发现，逐一评估证据强度，"
+            "注意辩护智能体的反驳论点并合理调整权重，最后给出整体风险等级和理由。"
+        )
+        reports_text = summarize_reports_for_judge(reports)
         final_report = llm.generate_json(
-            "你是裁决分析智能体，负责综合判断舞弊风险等级。",
-            f"以下是各智能体结论：\n{json.dumps(reports, ensure_ascii=False)}",
-            {
-                "type": "object",
-                "properties": {
-                    "overall_risk_level": {"type": "string"},
-                    "accepted_points": {"type": "array", "items": {"type": "string"}},
-                    "rejected_points": {"type": "array", "items": {"type": "string"}},
-                    "rationale": {"type": "string"},
-                    "uncertainty": {"type": "string"},
-                    "suggestions": {"type": "array", "items": {"type": "string"}},
-                },
-                "required": [
-                    "overall_risk_level",
-                    "accepted_points",
-                    "rejected_points",
-                    "rationale",
-                    "uncertainty",
-                    "suggestions",
-                ],
-            },
+            judge_system,
+            f"以下是各智能体结论：\n{reports_text}",
+            FINAL_SCHEMA,
         )
         with open(output_dir / "final_report.json", "w", encoding="utf-8") as f:
             json.dump(final_report, f, ensure_ascii=False, indent=2)
@@ -467,7 +457,7 @@ def _run_pipeline_stream(
         _fail_run(run_id, str(exc))
 
 
-def _update_run(run_id: str, step_data: Dict[str, Any]) -> None:
+def _update_run(run_id: str, step_data: dict[str, Any]) -> None:
     with RUN_LOCK:
         run = RUNS.get(run_id)
         if not run:
@@ -476,7 +466,7 @@ def _update_run(run_id: str, step_data: Dict[str, Any]) -> None:
         run["last_update"] = time.time()
 
 
-def _finalize_run(run_id: str, workpaper: Dict[str, Any], reports: Dict[str, Any], final_report: Dict[str, Any]) -> None:
+def _finalize_run(run_id: str, workpaper: dict[str, Any], reports: dict[str, Any], final_report: dict[str, Any]) -> None:
     with RUN_LOCK:
         run = RUNS.get(run_id)
         if not run:

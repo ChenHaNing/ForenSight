@@ -1,5 +1,5 @@
-from pathlib import Path
 import inspect
+from pathlib import Path
 
 from src.financials import compute_financial_metrics, extract_financials_with_fallback
 
@@ -256,6 +256,45 @@ def test_extract_financials_with_fallback_enriches_income_statement_from_text_pa
     assert data["income_statement"]["revenue"] == 391035
     assert data["income_statement"]["cost_of_goods_sold"] == 223546
     assert data["income_statement"]["operating_income"] == 123216
+
+
+def test_extract_financials_with_fallback_drops_scale_artifact_values():
+    response = {
+        "income_statement": {
+            "revenue": 80561531747.38,
+            "cost_of_goods_sold": None,
+            "operating_income": 17.0,
+            "net_income": 282993622.91,
+            "ebit": 17.0,
+            "interest_expense": None,
+            "ebitda": None,
+        },
+        "balance_sheet": {
+            "total_assets": 66630329742.1,
+            "shareholders_equity": 11327166544.56,
+        },
+        "cash_flow": {
+            "operating_cash_flow": -186737123.14,
+            "investing_cash_flow": None,
+            "financing_cash_flow": 58.3,
+        },
+        "market_data": {
+            "shares_outstanding": 1728184696,
+            "earnings_growth_rate": -0.5469,
+        },
+    }
+    llm = FakeLLM([response, response, response, response])
+    data = extract_financials_with_fallback(
+        "sample text",
+        llm,
+        parallel=False,
+        min_fields=1,
+        enrichment_text="sample text",
+        company_name="Example Co.",
+    )
+    assert "operating_income" not in data["income_statement"]
+    assert "ebit" not in data["income_statement"]
+    assert "financing_cash_flow" not in data["cash_flow"]
 
 
 def test_sec_companyfacts_values_override_inconsistent_local_units(monkeypatch):

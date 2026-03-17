@@ -1,30 +1,30 @@
 import json
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Any, Optional
 
+from .agents import run_agents_suite
+from .financials import extract_financials_with_fallback
 from .pdf_loader import (
-    extract_pdf_text_chunks,
-    extract_financial_statement_text,
-    score_financial_text,
     extract_company_name,
-    extract_revenue_context,
     extract_context_text,
-    score_revenue_text,
+    extract_financial_statement_text,
+    extract_pdf_text_chunks,
+    extract_revenue_context,
     score_context_text,
+    score_financial_text,
+    score_revenue_text,
 )
+from .run_logger import log_step
+from .summarizer import summarize_text
+from .token_utils import truncate_json_for_prompt
 from .workpaper import (
+    apply_company_profile_hint,
+    build_context_capsule,
+    build_context_pack,
     build_workpaper_from_text,
     react_enrich_workpaper,
-    apply_company_profile_hint,
-    build_context_pack,
-    build_context_capsule,
     sanitize_company_scope_fields,
 )
-from .financials import extract_financials_with_fallback
-from .summarizer import summarize_text
-from .agents import run_agents_suite
-from .run_logger import log_step
-
 
 FINAL_SCHEMA = {
     "type": "object",
@@ -48,18 +48,18 @@ FINAL_SCHEMA = {
 
 
 def run_pipeline(
-    input_texts: Optional[List[str]],
-    pdf_paths: Optional[List[str]],
+    input_texts: Optional[list[str]],
+    pdf_paths: Optional[list[str]],
     llm,
     output_dir: Path,
     enable_defense: bool = True,
     tavily_client=None,
     agent_max_concurrency: int = 4,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     if not input_texts and not pdf_paths:
         raise ValueError("input_texts or pdf_paths required")
 
-    texts: List[str] = []
+    texts: list[str] = []
     financial_text = ""
     revenue_text = ""
     context_text = ""
@@ -132,7 +132,7 @@ def run_pipeline(
 
     _write_json(output_dir / "workpaper.json", workpaper)
 
-    def _on_agent_result(agent_name: str, report: Dict[str, Any]) -> None:
+    def _on_agent_result(agent_name: str, report: dict[str, Any]) -> None:
         _write_json(output_dir / "agent_reports" / f"{agent_name}.json", report)
         log_step(output_dir, f"agent:{agent_name}", report)
 
@@ -146,9 +146,15 @@ def run_pipeline(
         on_agent_result=_on_agent_result,
     )
 
+    judge_system = (
+        "你是裁决分析智能体，负责综合判断舞弊风险等级。"
+        "请先汇总各智能体的主要发现，逐一评估证据强度，"
+        "注意辩护智能体的反驳论点并合理调整权重，最后给出整体风险等级和理由。"
+    )
+    reports_text = summarize_reports_for_judge(reports)
     final_report = llm.generate_json(
-        "你是裁决分析智能体，负责综合判断舞弊风险等级。",
-        f"以下是各智能体结论：\n{json.dumps(reports, ensure_ascii=False)}",
+        judge_system,
+        f"以下是各智能体结论：\n{reports_text}",
         FINAL_SCHEMA,
     )
     _write_json(output_dir / "final_report.json", final_report)
@@ -156,6 +162,27 @@ def run_pipeline(
     return final_report
 
 
-def _write_json(path: Path, payload: Dict[str, Any]) -> None:
+_JUDGE_KEEP_FIELDS = [
+    "risk_level", "risk_points", "evidence",
+    "reasoning_summary", "confidence", "suggestions",
+]
+
+
+def summarize_reports_for_judge(
+    reports: dict[str, dict[str, Any]],
+    max_tokens: int = 40000,
+) -> str:
+    """Condense agent reports for the judge, keeping only essential fields."""
+    condensed: dict[str, Any] = {}
+    for name, report in reports.items():
+        if not isinstance(report, dict):
+            continue
+        condensed[name] = {
+            k: report[k] for k in _JUDGE_KEEP_FIELDS if k in report
+        }
+    return truncate_json_for_prompt(condensed, max_tokens)
+
+
+def _write_json(path: Path, payload: dict[str, Any]) -> None:
     with open(path, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)

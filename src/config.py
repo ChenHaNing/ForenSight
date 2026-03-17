@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass
+
 from dotenv import load_dotenv
 
 
@@ -14,6 +15,7 @@ class AppConfig:
     agent_max_concurrency: int
     tavily_api_key: str
     debug: bool
+    max_prompt_tokens: int
 
 
 def load_config() -> AppConfig:
@@ -38,4 +40,5 @@ def load_config() -> AppConfig:
         agent_max_concurrency=agent_max_concurrency,
         tavily_api_key=os.getenv("TAVILY_API_KEY", ""),
         debug=os.getenv("DEBUG", "false").lower() == "true",
+        max_prompt_tokens=int(os.getenv("MAX_PROMPT_TOKENS", "56000")),
     )

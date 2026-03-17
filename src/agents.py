@@ -1,9 +1,10 @@
-import json
+import logging
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Dict, Any, List, Callable, Optional
-from .workpaper import filter_external_results_by_company
+from typing import Any, Callable, Optional
 
+from .token_utils import fit_to_token_budget, truncate_json_for_prompt
+from .workpaper import filter_external_results_by_company
 
 REPORT_SCHEMA = {
     "type": "object",
@@ -44,7 +45,11 @@ AGENT_PROMPTS = {
     "fraud_type_D": "你是净资产类舞弊智能体，关注资产减值、评估增值、资本结构异常。",
     "fraud_type_E": "你是资金占用舞弊智能体，关注资金往来、关联交易与资金回流。",
     "fraud_type_F": "你是特殊行业/业务模式舞弊智能体，关注行业特有风险与模式异常。",
-    "defense": "你是辩护分析智能体，为风险点提供合理解释或反证。",
+    "defense": (
+        "你是辩护分析智能体，为风险点提供合理解释或反证。"
+        "请逐一审查各舞弊类型分析块，判断是否存在合理商业解释。"
+        "重点关注：行业惯例、会计政策合理性、管理层解释的充分性。"
+    ),
 }
 
 
@@ -75,12 +80,12 @@ MAX_REACT_RETRY_ROUNDS = 2
 
 def run_agent(
     agent_name: str,
-    workpaper: Dict[str, Any],
+    workpaper: dict[str, Any],
     llm,
     tavily_client=None,
     react_retry: bool = False,
     max_retries: int = 1,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     if agent_name not in AGENT_PROMPTS:
         raise ValueError(f"Unknown agent: {agent_name}")
 
@@ -88,13 +93,15 @@ def run_agent(
     content = _build_agent_content(agent_name, workpaper)
 
     constraints = (
-        "约束要求：\n"
-        "1) 不得预设立场，仅基于证据判断。\n"
-        "2) 若数据缺失，需明确标注缺失原因，不得臆测。\n"
-        "3) 关注特征协同性，避免单点异常导致高风险。\n"
-        "4) 输出风险点需对应具体证据。\n"
-        "5) 若为关注类特征，需说明为何需要进一步核查。\n"
-        "6) 必须给出research_plan：\n"
+        "推理与输出要求：\n"
+        "1) 请先逐步分析证据，再得出结论（Chain-of-Thought）。\n"
+        "2) 不得预设立场，仅基于证据判断。\n"
+        "3) 若数据缺失，需明确标注缺失原因，不得臆测。\n"
+        "4) 关注特征协同性，避免单点异常导致高风险。\n"
+        "5) 输出风险点需对应具体证据。\n"
+        "6) 若为关注类特征，需说明为何需要进一步核查。\n"
+        "7) reasoning_summary字段必须包含完整推理链，即从证据到结论的每一步逻辑。\n"
+        "8) 必须给出research_plan：\n"
         "   - need_autonomous_research: 是否需要继续自主外部调查；\n"
         "   - minimum_rounds: 建议最少补充调查轮次(0-2)；\n"
         "   - follow_up_queries: 下一轮建议检索语句列表；\n"
@@ -102,11 +109,12 @@ def run_agent(
     )
     capsule = workpaper.get("context_capsule", "")
     capsule_block = f"背景要点（上下文胶囊）：\n{capsule}\n\n" if capsule else ""
+    content_json = truncate_json_for_prompt(content, max_tokens=30000)
     user_prompt = (
         "请基于输入内容生成结构化报告，必须引用证据并避免臆测。\n\n"
         f"{capsule_block}"
         f"{constraints}\n"
-        f"输入内容：\n{json.dumps(content, ensure_ascii=False)}\n"
+        f"输入内容：\n{content_json}\n"
     )
 
     external_results = _build_external_results(agent_name, workpaper, tavily_client)
@@ -114,9 +122,8 @@ def run_agent(
     if company_name:
         external_results = filter_external_results_by_company(external_results, company_name)
     if external_results:
-        user_prompt += "\n\n外部检索摘要：\n" + _format_external_results(external_results)
-    if capsule:
-        user_prompt += "\n\n背景要点（提醒）：\n" + capsule
+        formatted = _format_external_results(external_results)
+        user_prompt += "\n\n外部检索摘要：\n" + fit_to_token_budget(formatted, 3000)
 
     report = llm.generate_json(system_prompt, user_prompt, REPORT_SCHEMA)
     react_attempts = 0
@@ -136,39 +143,53 @@ def run_agent(
         report["_react_required_rounds"] = required_min_rounds
 
     if react_retry and should_retry and tavily_enabled:
+        # Base prompt for retries (fresh each round, not accumulated)
+        base_retry_prompt = (
+            "请基于输入内容和补充检索结果，更新结构化报告。\n\n"
+            f"{capsule_block}"
+            f"{constraints}\n"
+            f"输入内容：\n{content_json}\n"
+        )
         while react_attempts < MAX_REACT_RETRY_ROUNDS and (
             react_attempts < required_min_rounds or policy["need_autonomous_research"]
         ):
-            retry_results = _build_react_retry_results(agent_name, workpaper, report, tavily_client, attempt_index=react_attempts)
-            if company_name:
-                retry_results = filter_external_results_by_company(retry_results, company_name)
-            retry_prompt = user_prompt
-            if retry_results:
-                retry_prompt += "\n\n补充检索摘要：\n" + _format_external_results(retry_results)
-            retry_prompt += f"\n\n当前已完成自主调查轮次：{react_attempts + 1}"
-            retry_report = llm.generate_json(system_prompt, retry_prompt, REPORT_SCHEMA)
-            react_attempts += 1
-            if retry_results:
-                retry_report["_external_search"] = retry_results
-            report = retry_report
-            policy = _extract_research_plan(report)
-            required_min_rounds = max(required_min_rounds, policy["minimum_rounds"])
-            if react_attempts >= required_min_rounds and not policy["need_autonomous_research"]:
+            try:
+                retry_results = _build_react_retry_results(agent_name, workpaper, report, tavily_client, attempt_index=react_attempts)
+                if company_name:
+                    retry_results = filter_external_results_by_company(retry_results, company_name)
+                retry_prompt = base_retry_prompt
+                if retry_results:
+                    formatted = _format_external_results(retry_results)
+                    retry_prompt += "\n\n补充检索摘要：\n" + fit_to_token_budget(formatted, 4000)
+                retry_prompt += f"\n\n当前已完成自主调查轮次：{react_attempts + 1}"
+                retry_report = llm.generate_json(system_prompt, retry_prompt, REPORT_SCHEMA)
+                react_attempts += 1
+                if retry_results:
+                    retry_report["_external_search"] = retry_results
+                report = retry_report
+                policy = _extract_research_plan(report)
+                required_min_rounds = max(required_min_rounds, policy["minimum_rounds"])
+                if react_attempts >= required_min_rounds and not policy["need_autonomous_research"]:
+                    break
+            except Exception as exc:
+                logging.warning("Agent %s ReAct retry %d failed: %s", agent_name, react_attempts, exc)
+                react_attempts += 1
+                report["_react_error"] = str(exc)
                 break
     report["_react_attempts"] = react_attempts
     return report
 
 
 def run_agents_suite(
-    workpaper: Dict[str, Any],
+    workpaper: dict[str, Any],
     llm,
     tavily_client=None,
     enable_defense: bool = True,
     react_retry: bool = True,
     max_retries: int = 1,
     max_concurrency: int = 4,
-    on_agent_result: Optional[Callable[[str, Dict[str, Any]], None]] = None,
-) -> Dict[str, Dict[str, Any]]:
+    on_agent_result: Optional[Callable[[str, dict[str, Any]], None]] = None,
+) -> dict[str, dict[str, Any]]:
     agent_order = CORE_AGENT_ORDER[:] + (["defense"] if enable_defense else [])
     if not agent_order:
         return {}
@@ -179,9 +200,9 @@ def run_agents_suite(
         max_concurrency = 1
     max_workers = min(max_concurrency, len(agent_order))
 
-    reports: Dict[str, Dict[str, Any]] = {}
+    reports: dict[str, dict[str, Any]] = {}
 
-    def _run_single(agent_name: str) -> Dict[str, Any]:
+    def _run_single(agent_name: str) -> dict[str, Any]:
         return run_agent(
             agent_name,
             workpaper,
@@ -212,9 +233,28 @@ def run_agents_suite(
     return {agent_name: reports[agent_name] for agent_name in agent_order if agent_name in reports}
 
 
-def _build_agent_content(agent_name: str, workpaper: Dict[str, Any]) -> Dict[str, Any]:
+_DEFENSE_FIELDS = [
+    "company_profile", "financial_summary", "risk_disclosures",
+    "major_events", "governance_signals", "industry_comparables",
+    "financial_metrics", "metrics_notes", "context_capsule",
+    "external_search_summary",
+]
+
+_FRAUD_BLOCK_MAX_CHARS = 2000
+
+
+def _build_agent_content(agent_name: str, workpaper: dict[str, Any]) -> dict[str, Any]:
     if AGENT_INPUT_FIELD[agent_name] == "all":
-        return workpaper
+        # Defense agent: curated subset instead of entire workpaper
+        content: dict[str, Any] = {k: workpaper.get(k, "") for k in _DEFENSE_FIELDS}
+        for key in workpaper:
+            if key.startswith("fraud_type_") and key.endswith("_block"):
+                value = workpaper.get(key, "")
+                if isinstance(value, str) and len(value) > _FRAUD_BLOCK_MAX_CHARS:
+                    half = _FRAUD_BLOCK_MAX_CHARS // 2
+                    value = value[:half] + "\n[...截断...]\n" + value[-half:]
+                content[key] = value
+        return content
 
     focus_key = AGENT_INPUT_FIELD[agent_name]
     return {
@@ -229,7 +269,7 @@ def _build_agent_content(agent_name: str, workpaper: Dict[str, Any]) -> Dict[str
     }
 
 
-def _build_external_results(agent_name: str, workpaper: Dict[str, Any], tavily_client) -> List[Dict[str, Any]]:
+def _build_external_results(agent_name: str, workpaper: dict[str, Any], tavily_client) -> list[dict[str, Any]]:
     if not (tavily_client and getattr(tavily_client, "enabled", False)):
         return []
     company = workpaper.get("company_profile", "目标公司")
@@ -249,11 +289,11 @@ def _build_external_results(agent_name: str, workpaper: Dict[str, Any], tavily_c
 
 def _build_react_retry_results(
     agent_name: str,
-    workpaper: Dict[str, Any],
-    report: Dict[str, Any],
+    workpaper: dict[str, Any],
+    report: dict[str, Any],
     tavily_client,
     attempt_index: int = 0,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     company = workpaper.get("company_profile", "目标公司")
     queries = _build_retry_queries(
         agent_name,
@@ -262,10 +302,10 @@ def _build_react_retry_results(
         report,
         attempt_index=attempt_index,
     )
-    results: List[Dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
     for query in queries:
         results.extend(tavily_client.search(query, max_results=4))
-    deduped: List[Dict[str, Any]] = []
+    deduped: list[dict[str, Any]] = []
     seen = set()
     for item in results:
         key = (str(item.get("url", "")), str(item.get("title", "")))
@@ -279,10 +319,10 @@ def _build_react_retry_results(
 def _build_retry_queries(
     agent_name: str,
     company: str,
-    workpaper: Dict[str, Any],
-    report: Dict[str, Any],
+    workpaper: dict[str, Any],
+    report: dict[str, Any],
     attempt_index: int = 0,
-) -> List[str]:
+) -> list[str]:
     base_focus = {
         "base": "财务舞弊 风险 信号",
         "fraud_type_A": "收入确认 虚构交易 财务舞弊",
@@ -315,7 +355,7 @@ def _build_retry_queries(
     return deduped[:6]
 
 
-def _format_external_results(results: List[Dict[str, Any]]) -> str:
+def _format_external_results(results: list[dict[str, Any]]) -> str:
     lines = []
     for item in results:
         title = item.get("title", "")
@@ -325,7 +365,7 @@ def _format_external_results(results: List[Dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
-def _extract_research_plan(report: Dict[str, Any]) -> Dict[str, Any]:
+def _extract_research_plan(report: dict[str, Any]) -> dict[str, Any]:
     plan = report.get("research_plan")
     if isinstance(plan, dict):
         need_research = bool(plan.get("need_autonomous_research"))
@@ -354,7 +394,7 @@ def _extract_research_plan(report: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def _model_suggested_queries(report: Dict[str, Any]) -> List[str]:
+def _model_suggested_queries(report: dict[str, Any]) -> list[str]:
     plan = _extract_research_plan(report)
     return plan.get("follow_up_queries", [])
 

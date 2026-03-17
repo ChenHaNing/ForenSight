@@ -1,14 +1,14 @@
 import importlib.util
+import os
+import re
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, Tuple, List, Optional
-import re
-import os
-from datetime import datetime
+from typing import Any, Optional
 
 import requests
 
+from .token_utils import fit_to_token_budget
 
 RATIO_CALCULATOR_PATH_ENV = "FINANCIAL_RATIO_CALCULATOR_PATH"
 SKILL_CALCULATOR_REL_PATH = Path("skills/analyzing-financial-statements/calculate_ratios.py")
@@ -16,10 +16,7 @@ SKILL_CALCULATOR_REL_PATH = Path("skills/analyzing-financial-statements/calculat
 
 def _default_skill_calculator_path() -> Path:
     codex_home = os.getenv("CODEX_HOME", "").strip()
-    if codex_home:
-        base = Path(codex_home).expanduser()
-    else:
-        base = Path.home() / ".codex"
+    base = Path(codex_home).expanduser() if codex_home else Path.home() / ".codex"
     return base / SKILL_CALCULATOR_REL_PATH
 
 
@@ -108,14 +105,14 @@ SEC_COMPANYFACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json
 SEC_ANNUAL_FORMS = {"10-K", "10-K/A", "20-F", "20-F/A", "40-F", "40-F/A"}
 
 
-def _load_ratio_calculator():
-    candidates: List[Path] = []
+def _load_ratio_calculator() -> Any:
+    candidates: list[Path] = []
     env_path = os.getenv(RATIO_CALCULATOR_PATH_ENV, "").strip()
     if env_path:
         candidates.append(Path(env_path).expanduser())
     candidates.append(_default_skill_calculator_path())
 
-    load_errors: List[str] = []
+    load_errors: list[str] = []
     for path in candidates:
         ratio_cls, err = _load_ratio_calculator_from_path(path)
         if ratio_cls is not None:
@@ -134,7 +131,7 @@ def _load_ratio_calculator():
     raise RuntimeError(f"Failed to load financial ratio calculator ({detail})")
 
 
-def _load_ratio_calculator_from_path(path: Path) -> Tuple[Optional[Any], Optional[str]]:
+def _load_ratio_calculator_from_path(path: Path) -> tuple[Optional[Any], Optional[str]]:
     if not path.exists():
         return None, None
 
@@ -156,15 +153,15 @@ def _load_ratio_calculator_from_path(path: Path) -> Tuple[Optional[Any], Optiona
     return ratio_cls, None
 
 
-def _merge_sections(base: Dict[str, Any], update: Dict[str, Any]) -> Dict[str, Any]:
+def _merge_sections(base: dict[str, Any], update: dict[str, Any]) -> dict[str, Any]:
     for section in ["income_statement", "balance_sheet", "cash_flow", "market_data"]:
         base.setdefault(section, {})
         base[section].update(update.get(section, {}) or {})
     return base
 
 
-def _canonicalize_financial_data(data: Dict[str, Any]) -> Dict[str, Any]:
-    canonical: Dict[str, Any] = {
+def _canonicalize_financial_data(data: dict[str, Any]) -> dict[str, Any]:
+    canonical: dict[str, Any] = {
         "income_statement": {},
         "balance_sheet": {},
         "cash_flow": {},
@@ -182,7 +179,7 @@ def _canonicalize_financial_data(data: Dict[str, Any]) -> Dict[str, Any]:
     return canonical
 
 
-def extract_financial_statements(text: str, llm) -> Dict[str, Any]:
+def extract_financial_statements(text: str, llm) -> dict[str, Any]:
     system_prompt = "你是财务报表解析专家，负责从文本中提取核心报表数据。"
     user_prompt = (
         "请从以下文本中抽取资产负债表、利润表、现金流量表的核心字段，"
@@ -191,12 +188,12 @@ def extract_financial_statements(text: str, llm) -> Dict[str, Any]:
         "优先提取最新年度/期间的数值，若有多期请以最新为主。"
         "缺失请用null。请输出JSON，包含income_statement、"
         "balance_sheet、cash_flow、market_data。\n\n"
-        f"文本内容：\n{text}\n"
+        f"文本内容：\n{fit_to_token_budget(text, 40000)}\n"
     )
     return llm.generate_json(system_prompt, user_prompt, FIN_STATEMENT_SCHEMA)
 
 
-def extract_financial_statements_parallel(text: str, llm, parallel: bool = True) -> Dict[str, Any]:
+def extract_financial_statements_parallel(text: str, llm, parallel: bool = True) -> dict[str, Any]:
     # Fall back to sequential mode when a non-thread-safe test double is injected.
     if getattr(llm, "_responses", None) is not None:
         parallel = False
@@ -228,15 +225,17 @@ def extract_financial_statements_parallel(text: str, llm, parallel: bool = True)
         ),
     ]
 
+    truncated_text = fit_to_token_budget(text, 40000)
+
     def run_prompt(system, instruction):
         user_prompt = (
             f"{instruction}\n"  # instruction is already specific
             "缺失请用null。输出JSON，包含income_statement、balance_sheet、cash_flow、market_data。\n\n"
-            f"文本内容：\n{text}\n"
+            f"文本内容：\n{truncated_text}\n"
         )
         return llm.generate_json(system, user_prompt, FIN_STATEMENT_SCHEMA)
 
-    results: List[Dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
     if parallel:
         with ThreadPoolExecutor(max_workers=4) as executor:
             futures = [executor.submit(run_prompt, p[0], p[1]) for p in prompts]
@@ -246,7 +245,7 @@ def extract_financial_statements_parallel(text: str, llm, parallel: bool = True)
         for system, instruction, _ in prompts:
             results.append(run_prompt(system, instruction))
 
-    merged: Dict[str, Any] = {
+    merged: dict[str, Any] = {
         "income_statement": {},
         "balance_sheet": {},
         "cash_flow": {},
@@ -265,28 +264,54 @@ def extract_financials_with_fallback(
     enrichment_text: str = "",
     tavily_client=None,
     company_name: str = "",
-) -> Dict[str, Any]:
-    data = _canonicalize_financial_data(
-        extract_financial_statements_parallel(text, llm, parallel=parallel)
-    )
-    if _count_financial_fields(data) >= min_fields:
-        return _enrich_financial_data(
-            data,
-            source_text=enrichment_text or text,
-            tavily_client=tavily_client,
-            company_name=company_name,
-        )
-    fallback = _canonicalize_financial_data(extract_financial_statements(text, llm))
-    merged = _merge_sections(data, fallback)
-    return _enrich_financial_data(
-        merged,
-        source_text=enrichment_text or text,
-        tavily_client=tavily_client,
-        company_name=company_name,
-    )
+) -> dict[str, Any]:
+    attempts: list[tuple[str, bool]] = [(text, parallel)]
+    for limit in (12000, 9000, 6000):
+        if len(text) <= limit:
+            continue
+        attempts.append((text[:limit], False))
+
+    last_bad_request_error: Optional[Exception] = None
+    for attempt_text, attempt_parallel in attempts:
+        try:
+            data = _canonicalize_financial_data(
+                extract_financial_statements_parallel(attempt_text, llm, parallel=attempt_parallel)
+            )
+            if _count_financial_fields(data) >= min_fields:
+                return _enrich_financial_data(
+                    data,
+                    source_text=enrichment_text or text,
+                    tavily_client=tavily_client,
+                    company_name=company_name,
+                )
+            fallback = _canonicalize_financial_data(extract_financial_statements(attempt_text, llm))
+            merged = _merge_sections(data, fallback)
+            return _enrich_financial_data(
+                merged,
+                source_text=enrichment_text or text,
+                tavily_client=tavily_client,
+                company_name=company_name,
+            )
+        except Exception as exc:
+            if _is_http_400_error(exc):
+                last_bad_request_error = exc
+                continue
+            raise
+
+    if last_bad_request_error is not None:
+        raise last_bad_request_error
+    raise RuntimeError("financial extraction failed without explicit error")
 
 
-def _count_financial_fields(data: Dict[str, Any]) -> int:
+def _is_http_400_error(exc: Exception) -> bool:
+    if isinstance(exc, requests.HTTPError):
+        response = getattr(exc, "response", None)
+        return bool(response is not None and response.status_code == 400)
+    message = str(exc)
+    return "400 Client Error" in message or "HTTP 400" in message
+
+
+def _count_financial_fields(data: dict[str, Any]) -> int:
     count = 0
     for section in ["income_statement", "balance_sheet", "cash_flow", "market_data"]:
         values = (data.get(section, {}) or {}).values()
@@ -322,8 +347,8 @@ def _coerce_number(value: Any) -> float:
         return None
 
 
-def _extract_number_series(line: str) -> List[float]:
-    numbers: List[float] = []
+def _extract_number_series(line: str) -> list[float]:
+    numbers: list[float] = []
     for raw in re.findall(r"\(?-?\d[\d,]*(?:\.\d+)?\)?", line):
         num = _coerce_number(raw)
         if num is not None:
@@ -331,7 +356,7 @@ def _extract_number_series(line: str) -> List[float]:
     return numbers
 
 
-def _section_block(text: str, start_pattern: str, end_patterns: List[str]) -> str:
+def _section_block(text: str, start_pattern: str, end_patterns: list[str]) -> str:
     start = re.search(start_pattern, text, flags=re.IGNORECASE)
     if not start:
         return text
@@ -339,15 +364,14 @@ def _section_block(text: str, start_pattern: str, end_patterns: List[str]) -> st
     end_index = None
     for pattern in end_patterns:
         hit = re.search(pattern, tail, flags=re.IGNORECASE)
-        if hit and hit.start() > 0:
-            if end_index is None or hit.start() < end_index:
-                end_index = hit.start()
+        if hit and hit.start() > 0 and (end_index is None or hit.start() < end_index):
+            end_index = hit.start()
     if end_index is None:
         return tail
     return tail[:end_index]
 
 
-def _extract_first_by_patterns(text: str, patterns: List[str]) -> float:
+def _extract_first_by_patterns(text: str, patterns: list[str]) -> float:
     for pattern in patterns:
         match = re.search(pattern, text, flags=re.IGNORECASE | re.MULTILINE)
         if match:
@@ -421,7 +445,7 @@ def _extract_financing_cash_flow(text: str) -> float:
     )
 
 
-def _extract_cash_begin_end_balances(text: str) -> Tuple[float, float]:
+def _extract_cash_begin_end_balances(text: str) -> tuple[float, float]:
     cashflow_block = _section_block(
         text,
         r"CONSOLIDATED\s+STATEMENTS\s+OF\s+CASH\s+FLOWS",
@@ -454,7 +478,7 @@ def _extract_term_debt_total(text: str) -> float:
     )
     if direct is not None:
         return direct
-    term_debt_values: List[float] = []
+    term_debt_values: list[float] = []
     for match in re.finditer(r"Term\s+debt[^\n\r]{0,120}", balance_block, flags=re.IGNORECASE):
         line = match.group(0)
         numbers = _extract_number_series(line)
@@ -603,7 +627,7 @@ def _sec_enabled() -> bool:
     return os.getenv("ENABLE_SEC_COMPANYFACTS", "true").lower() == "true"
 
 
-def _sec_headers() -> Dict[str, str]:
+def _sec_headers() -> dict[str, str]:
     user_agent = os.getenv(
         "SEC_USER_AGENT",
         "ForenSight Research Bot/1.0 (contact: research@example.com)",
@@ -614,7 +638,7 @@ def _sec_headers() -> Dict[str, str]:
     }
 
 
-def _http_get_json(url: str, timeout: int = 20) -> Dict[str, Any]:
+def _http_get_json(url: str, timeout: int = 20) -> dict[str, Any]:
     try:
         resp = requests.get(url, headers=_sec_headers(), timeout=timeout)
         resp.raise_for_status()
@@ -649,14 +673,14 @@ def _extract_possible_ticker(text: str) -> str:
 
 
 @lru_cache(maxsize=1)
-def _load_sec_company_tickers() -> List[Dict[str, Any]]:
+def _load_sec_company_tickers() -> list[dict[str, Any]]:
     if not _sec_enabled():
         return []
     payload = _http_get_json(SEC_TICKERS_URL)
     if not payload:
         return []
 
-    rows: List[Dict[str, Any]] = []
+    rows: list[dict[str, Any]] = []
     if isinstance(payload, dict):
         values = payload.values()
     elif isinstance(payload, list):
@@ -711,7 +735,7 @@ def _resolve_sec_cik(company_name: str, source_text: str) -> str:
     return ""
 
 
-def _pick_latest_fact_value(entries: List[Dict[str, Any]]) -> float:
+def _pick_latest_fact_value(entries: list[dict[str, Any]]) -> float:
     if not entries:
         return None
     numeric = []
@@ -740,9 +764,9 @@ def _pick_latest_fact_value(entries: List[Dict[str, Any]]) -> float:
 
 
 def _get_companyfact_value(
-    companyfacts: Dict[str, Any],
-    concepts: List[Tuple[str, str]],
-    preferred_units: List[str],
+    companyfacts: dict[str, Any],
+    concepts: list[tuple[str, str]],
+    preferred_units: list[str],
 ) -> float:
     facts = companyfacts.get("facts", {}) or {}
     for taxonomy, concept in concepts:
@@ -759,10 +783,10 @@ def _get_companyfact_value(
 
 
 def _fill_financials_from_sec_companyfacts(
-    income: Dict[str, Any],
-    balance: Dict[str, Any],
-    cash: Dict[str, Any],
-    market: Dict[str, Any],
+    income: dict[str, Any],
+    balance: dict[str, Any],
+    cash: dict[str, Any],
+    market: dict[str, Any],
     company_name: str,
     source_text: str,
 ) -> None:
@@ -775,7 +799,7 @@ def _fill_financials_from_sec_companyfacts(
     if not payload:
         return
 
-    def apply(target: Dict[str, Any], key: str, value: Any) -> None:
+    def apply(target: dict[str, Any], key: str, value: Any) -> None:
         numeric = _coerce_number(value)
         if numeric is None:
             return
@@ -975,7 +999,7 @@ def _fill_financials_from_sec_companyfacts(
     )
 
 
-def _fill_income_fields_from_tavily(income: Dict[str, Any], company_name: str, tavily_client) -> None:
+def _fill_income_fields_from_tavily(income: dict[str, Any], company_name: str, tavily_client) -> None:
     if not tavily_client or not getattr(tavily_client, "enabled", False):
         return
     missing_revenue = _coerce_number(income.get("revenue")) is None
@@ -1038,11 +1062,11 @@ def _fill_financing_cash_flow_from_tavily(company_name: str, tavily_client) -> f
 
 
 def _enrich_financial_data(
-    data: Dict[str, Any],
+    data: dict[str, Any],
     source_text: str,
     tavily_client=None,
     company_name: str = "",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     enriched = _canonicalize_financial_data(data)
     income = enriched["income_statement"]
     balance = enriched["balance_sheet"]
@@ -1141,20 +1165,48 @@ def _enrich_financial_data(
         if earnings_growth is not None:
             market["earnings_growth_rate"] = earnings_growth
 
+    _sanitize_financial_scale_artifacts(enriched)
     return enriched
 
 
-def _metric_value(data: Dict[str, Any], section: str, field: str) -> float:
+def _sanitize_financial_scale_artifacts(enriched: dict[str, Any]) -> None:
+    """
+    Remove obvious unit/parse artifacts for very large issuers.
+
+    Example: revenue in tens of billions but operating income parsed as `17`.
+    """
+    income = enriched.get("income_statement", {}) or {}
+    cash = enriched.get("cash_flow", {}) or {}
+
+    revenue = _coerce_number(income.get("revenue"))
+    if revenue is not None and abs(revenue) >= 1_000_000_000:
+        for field in ("operating_income", "ebit", "cost_of_goods_sold"):
+            value = _coerce_number(income.get(field))
+            if value is not None and 0 < abs(value) < 1_000:
+                income.pop(field, None)
+
+    operating_cf = _coerce_number(cash.get("operating_cash_flow"))
+    financing_cf = _coerce_number(cash.get("financing_cash_flow"))
+    if (
+        operating_cf is not None
+        and abs(operating_cf) >= 100_000_000
+        and financing_cf is not None
+        and 0 < abs(financing_cf) < 1_000
+    ):
+        cash.pop("financing_cash_flow", None)
+
+
+def _metric_value(data: dict[str, Any], section: str, field: str) -> float:
     section_data = data.get(section, {}) or {}
     return _coerce_number(section_data.get(field))
 
 
 def _set_metric_unavailable(
-    metrics: Dict[str, Any],
-    notes: List[str],
+    metrics: dict[str, Any],
+    notes: list[str],
     category: str,
     metric: str,
-    reasons: List[str],
+    reasons: list[str],
 ) -> None:
     if category in metrics and metric in metrics[category]:
         metrics[category][metric] = None
@@ -1162,8 +1214,8 @@ def _set_metric_unavailable(
         notes.append(f"{category}.{metric} 缺少 {', '.join(reasons)}，未计算")
 
 
-def _apply_metric_quality_gate(metrics: Dict[str, Any], normalized: Dict[str, Any]) -> List[str]:
-    notes: List[str] = []
+def _apply_metric_quality_gate(metrics: dict[str, Any], normalized: dict[str, Any]) -> list[str]:
+    notes: list[str] = []
 
     net_income = _metric_value(normalized, "income_statement", "net_income")
     revenue = _metric_value(normalized, "income_statement", "revenue")
@@ -1425,9 +1477,9 @@ def _apply_metric_quality_gate(metrics: Dict[str, Any], normalized: Dict[str, An
     return notes
 
 
-def normalize_financial_data(data: Dict[str, Any]) -> Tuple[Dict[str, Any], List[str]]:
+def normalize_financial_data(data: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
     notes = []
-    normalized: Dict[str, Any] = {
+    normalized: dict[str, Any] = {
         "income_statement": {},
         "balance_sheet": {},
         "cash_flow": {},
@@ -1444,7 +1496,7 @@ def normalize_financial_data(data: Dict[str, Any]) -> Tuple[Dict[str, Any], List
     return normalized, notes
 
 
-def compute_financial_metrics(financial_data: Dict[str, Any]) -> Tuple[Dict[str, Any], List[str]]:
+def compute_financial_metrics(financial_data: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
     normalized, notes = normalize_financial_data(financial_data)
     ratio_cls = _load_ratio_calculator()
     calculator = ratio_cls(normalized)

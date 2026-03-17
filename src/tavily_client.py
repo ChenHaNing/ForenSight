@@ -1,5 +1,6 @@
-from typing import List, Dict, Any
 import os
+from typing import Any
+
 import requests
 from requests import RequestException
 
@@ -13,7 +14,7 @@ class TavilyClient:
     def enabled(self) -> bool:
         return bool(self.api_key)
 
-    def search(self, query: str, max_results: int = 5) -> List[Dict[str, Any]]:
+    def search(self, query: str, max_results: int = 5) -> list[dict[str, Any]]:
         if not self.api_key:
             return []
         if os.getenv("PYTEST_CURRENT_TEST"):

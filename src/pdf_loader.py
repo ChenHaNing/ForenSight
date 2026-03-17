@@ -1,5 +1,5 @@
-from typing import List, Dict
 import re
+
 from pypdf import PdfReader
 
 
@@ -7,9 +7,9 @@ def extract_pdf_text_chunks(
     pdf_path: str,
     chunk_size: int = 1500,
     overlap: int = 200,
-) -> List[Dict[str, str]]:
+) -> list[dict[str, str]]:
     reader = PdfReader(pdf_path)
-    chunks: List[Dict[str, str]] = []
+    chunks: list[dict[str, str]] = []
     chunk_index = 0
 
     for page_index, page in enumerate(reader.pages, start=1):
@@ -84,7 +84,7 @@ CONTEXT_KEYWORDS = [
 ]
 
 
-def extract_financial_statement_text(chunks: List[Dict[str, str]], max_chars: int = 16000) -> str:
+def extract_financial_statement_text(chunks: list[dict[str, str]], max_chars: int = 16000) -> str:
     scored = []
     for idx, chunk in enumerate(chunks):
         text = chunk.get("text", "")
@@ -125,7 +125,7 @@ def extract_financial_statement_text(chunks: List[Dict[str, str]], max_chars: in
     return "\n".join(text for _, text in selected)
 
 
-def extract_revenue_context(chunks: List[Dict[str, str]], max_chars: int = 6000) -> str:
+def extract_revenue_context(chunks: list[dict[str, str]], max_chars: int = 6000) -> str:
     scored = []
     for chunk in chunks:
         text = chunk.get("text", "")
@@ -143,7 +143,7 @@ def extract_revenue_context(chunks: List[Dict[str, str]], max_chars: int = 6000)
     return "\n".join(selected)
 
 
-def extract_context_text(chunks: List[Dict[str, str]], max_chars: int = 8000) -> str:
+def extract_context_text(chunks: list[dict[str, str]], max_chars: int = 8000) -> str:
     scored = []
     for chunk in chunks:
         text = chunk.get("text", "")

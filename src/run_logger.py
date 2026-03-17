@@ -1,10 +1,10 @@
 import json
 import time
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 
-def log_step(output_dir: Path, step: str, payload: Dict[str, Any]) -> None:
+def log_step(output_dir: Path, step: str, payload: dict[str, Any]) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     log_path = output_dir / "run.log"
     entry = {"ts": time.time(), "step": step, "payload": payload}

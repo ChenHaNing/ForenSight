@@ -25,10 +25,19 @@ cp .env.example .env
 请至少完成以下检查：
 
 ```bash
-python3 -m pytest
+make lint    # ruff 代码检查
+make test    # 运行全部测试
+```
+
+代码格式化（可选但推荐）：
+
+```bash
+make format  # ruff 自动格式化
 ```
 
 如果你修改了 API、行为或文档，请同时更新相应测试与 `README.md`。
+
+CI 会在每个 PR 上自动运行 lint + test，请确保本地通过后再提交。
 
 ## 提交规范
 

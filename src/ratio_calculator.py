@@ -1,8 +1,8 @@
-from typing import Any, Dict
+from typing import Any
 
 
 class FinancialRatioCalculator:
-    def __init__(self, financial_data: Dict[str, Any]) -> None:
+    def __init__(self, financial_data: dict[str, Any]) -> None:
         self.income_statement = financial_data.get("income_statement", {}) or {}
         self.balance_sheet = financial_data.get("balance_sheet", {}) or {}
         self.market_data = financial_data.get("market_data", {}) or {}
@@ -13,7 +13,7 @@ class FinancialRatioCalculator:
             return 0.0
         return numerator / denominator
 
-    def calculate_profitability_ratios(self) -> Dict[str, float]:
+    def calculate_profitability_ratios(self) -> dict[str, float]:
         net_income = self.income_statement.get("net_income", 0)
         equity = self.balance_sheet.get("shareholders_equity", 0)
         assets = self.balance_sheet.get("total_assets", 0)
@@ -28,7 +28,7 @@ class FinancialRatioCalculator:
             "net_margin": self._safe_divide(net_income, revenue),
         }
 
-    def calculate_liquidity_ratios(self) -> Dict[str, float]:
+    def calculate_liquidity_ratios(self) -> dict[str, float]:
         current_assets = self.balance_sheet.get("current_assets", 0)
         current_liabilities = self.balance_sheet.get("current_liabilities", 0)
         inventory = self.balance_sheet.get("inventory", 0)
@@ -39,7 +39,7 @@ class FinancialRatioCalculator:
             "cash_ratio": self._safe_divide(cash, current_liabilities),
         }
 
-    def calculate_leverage_ratios(self) -> Dict[str, float]:
+    def calculate_leverage_ratios(self) -> dict[str, float]:
         debt = self.balance_sheet.get("total_debt", 0)
         equity = self.balance_sheet.get("shareholders_equity", 0)
         ebit = self.income_statement.get("ebit", 0)
@@ -54,7 +54,7 @@ class FinancialRatioCalculator:
             ),
         }
 
-    def calculate_efficiency_ratios(self) -> Dict[str, float]:
+    def calculate_efficiency_ratios(self) -> dict[str, float]:
         revenue = self.income_statement.get("revenue", 0)
         assets = self.balance_sheet.get("total_assets", 0)
         cogs = self.income_statement.get("cost_of_goods_sold", 0)
@@ -68,7 +68,7 @@ class FinancialRatioCalculator:
             "days_sales_outstanding": self._safe_divide(365, receivables_turnover),
         }
 
-    def calculate_valuation_ratios(self) -> Dict[str, float]:
+    def calculate_valuation_ratios(self) -> dict[str, float]:
         share_price = self.market_data.get("share_price", 0)
         shares = self.market_data.get("shares_outstanding", 0)
         net_income = self.income_statement.get("net_income", 0)
@@ -95,7 +95,7 @@ class FinancialRatioCalculator:
             "peg_ratio": peg_ratio,
         }
 
-    def calculate_all_ratios(self) -> Dict[str, Any]:
+    def calculate_all_ratios(self) -> dict[str, Any]:
         return {
             "profitability": self.calculate_profitability_ratios(),
             "liquidity": self.calculate_liquidity_ratios(),

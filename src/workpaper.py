@@ -1,10 +1,13 @@
-from typing import Dict, Any, List
+import logging
 import re
+from typing import Any
 
-from .financials import extract_financial_statements, compute_financial_metrics
-
+from .financials import compute_financial_metrics, extract_financial_statements
+from .token_utils import truncate_json_for_prompt
 
 MAX_INPUT_CHARS = 60000
+MAX_CONTEXT_PACK_INPUT_CHARS = 18000
+MAX_REVENUE_CONTEXT_CHARS = 12000
 
 WORKPAPER_SCHEMA = {
     "type": "object",
@@ -73,10 +76,10 @@ def build_workpaper_from_text(
     financial_data=None,
     company_name: str = "",
     revenue_context: str = "",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     system_prompt = "你是财务舞弊识别专家，负责构建结构化多维信息工作底稿。"
-    if len(text) > MAX_INPUT_CHARS:
-        text = text[:MAX_INPUT_CHARS]
+    text = _fit_text_for_prompt(text, MAX_INPUT_CHARS)
+    revenue_context = _fit_text_for_prompt(revenue_context, MAX_REVENUE_CONTEXT_CHARS)
     company_hint = f"目标公司：{company_name}\n" if company_name else ""
     revenue_block = f"收入/分部信息补充：\n{revenue_context}\n\n" if revenue_context else ""
     user_prompt = (
@@ -176,11 +179,11 @@ MAX_WORKPAPER_RESEARCH_ROUNDS = 2
 
 
 def react_enrich_workpaper(
-    workpaper: Dict[str, Any],
+    workpaper: dict[str, Any],
     llm,
     tavily_client=None,
     max_retries: int = 2,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     if getattr(llm, "_responses", None) is not None:
         return workpaper
     if not (tavily_client and getattr(tavily_client, "enabled", False)):
@@ -192,64 +195,75 @@ def react_enrich_workpaper(
     max_rounds = max(min(max_retries, MAX_WORKPAPER_RESEARCH_ROUNDS), 1)
 
     while attempts < max_rounds:
-        plan = _request_workpaper_research_plan(workpaper, llm, attempts)
-        required_min_rounds = max(required_min_rounds, plan["minimum_rounds"])
-        continue_research = plan["need_autonomous_research"] or attempts < required_min_rounds
-        if not continue_research:
-            break
+        try:
+            plan = _request_workpaper_research_plan(workpaper, llm, attempts)
+            required_min_rounds = max(required_min_rounds, plan["minimum_rounds"])
+            continue_research = plan["need_autonomous_research"] or attempts < required_min_rounds
+            if not continue_research:
+                break
 
-        company = (
-            workpaper.get("company_profile")
-            or workpaper.get("context_pack", {}).get("company_name")
-            or "目标公司"
-        )
-        target_fields = _normalize_target_fields(plan.get("target_fields", []))
-        if not target_fields and plan["need_autonomous_research"]:
-            target_fields = ENRICHABLE_WORKPAPER_FIELDS[:]
-
-        queries = _build_workpaper_research_queries(company, plan, attempts)
-        new_queries = [q for q in queries if q not in seen_queries]
-        external_results: List[Dict[str, Any]] = []
-        for query in new_queries:
-            seen_queries.add(query)
-            external_results.extend(tavily_client.search(query, max_results=5))
-        external_results = filter_external_results_by_company(external_results, company)
-
-        if external_results and target_fields:
-            schema = {"type": "object", "properties": {}, "required": []}
-            for field in target_fields:
-                schema["properties"][field] = {"type": "string"}
-                schema["required"].append(field)
-
-            lines: List[str] = []
-            for item in external_results:
-                title = item.get("title", "")
-                url = item.get("url", "")
-                snippet = item.get("content", "")
-                lines.append(f"- {title} | {snippet} ({url})")
-
-            system_prompt = "你是企业信息补全专家，基于检索结果补全工作底稿缺失字段。"
-            user_prompt = (
-                "请根据外部检索结果补全指定字段，保证简洁、可审计且仅输出目标字段。\n"
-                f"补全字段：{', '.join(target_fields)}\n\n"
-                f"当前底稿摘要：\n{workpaper}\n\n"
-                "外部检索摘要：\n"
-                + ("\n".join(lines) if lines else "无外部检索结果")
+            company = (
+                workpaper.get("company_profile")
+                or workpaper.get("context_pack", {}).get("company_name")
+                or "目标公司"
             )
+            target_fields = _normalize_target_fields(plan.get("target_fields", []))
+            if not target_fields and plan["need_autonomous_research"]:
+                target_fields = ENRICHABLE_WORKPAPER_FIELDS[:]
 
-            filled = llm.generate_json(system_prompt, user_prompt, schema)
-            for field, value in filled.items():
-                if field in target_fields:
-                    workpaper[field] = value
-            workpaper["_react_search"] = external_results
+            queries = _build_workpaper_research_queries(company, plan, attempts)
+            new_queries = [q for q in queries if q not in seen_queries]
+            external_results: list[dict[str, Any]] = []
+            for query in new_queries:
+                seen_queries.add(query)
+                external_results.extend(tavily_client.search(query, max_results=5))
+            external_results = filter_external_results_by_company(external_results, company)
 
-        attempts += 1
+            if external_results and target_fields:
+                schema = {"type": "object", "properties": {}, "required": []}
+                for field in target_fields:
+                    schema["properties"][field] = {"type": "string"}
+                    schema["required"].append(field)
+
+                lines: list[str] = []
+                for item in external_results:
+                    title = item.get("title", "")
+                    url = item.get("url", "")
+                    snippet = item.get("content", "")
+                    lines.append(f"- {title} | {snippet} ({url})")
+
+                # Only send target fields + company_profile, not entire workpaper
+                context_subset = {k: workpaper.get(k, "") for k in target_fields}
+                context_subset["company_profile"] = workpaper.get("company_profile", "")
+                context_json = truncate_json_for_prompt(context_subset, max_tokens=8000)
+
+                system_prompt = "你是企业信息补全专家，基于检索结果补全工作底稿缺失字段。"
+                user_prompt = (
+                    "请根据外部检索结果补全指定字段，保证简洁、可审计且仅输出目标字段。\n"
+                    f"补全字段：{', '.join(target_fields)}\n\n"
+                    f"当前底稿摘要：\n{context_json}\n\n"
+                    "外部检索摘要：\n"
+                    + ("\n".join(lines) if lines else "无外部检索结果")
+                )
+
+                filled = llm.generate_json(system_prompt, user_prompt, schema)
+                for field, value in filled.items():
+                    if field in target_fields:
+                        workpaper[field] = value
+                workpaper["_react_search"] = external_results
+
+            attempts += 1
+        except Exception as exc:
+            logging.warning("Workpaper enrichment round %d failed: %s", attempts, exc)
+            attempts += 1
+            break
 
     return workpaper
 
 
-def _request_workpaper_research_plan(workpaper: Dict[str, Any], llm, attempts: int) -> Dict[str, Any]:
+def _request_workpaper_research_plan(workpaper: dict[str, Any], llm, attempts: int) -> dict[str, Any]:
     system_prompt = "你是工作底稿完整性审计智能体，负责决定是否需要继续自主外部调查。"
+    workpaper_json = truncate_json_for_prompt(workpaper, max_tokens=20000)
     user_prompt = (
         "请先判断工作底稿当前完整性，再给出research_plan。\n"
         "要求：\n"
@@ -259,13 +273,13 @@ def _request_workpaper_research_plan(workpaper: Dict[str, Any], llm, attempts: i
         "4) follow_up_queries: 给出可执行检索语句；\n"
         "5) reason: 说明理由。\n\n"
         f"当前已完成轮次：{attempts}\n"
-        f"当前工作底稿：\n{workpaper}\n"
+        f"当前工作底稿：\n{workpaper_json}\n"
     )
     plan_raw = llm.generate_json(system_prompt, user_prompt, WORKPAPER_RESEARCH_PLAN_SCHEMA)
     return _normalize_workpaper_research_plan(plan_raw)
 
 
-def _normalize_workpaper_research_plan(plan: Dict[str, Any]) -> Dict[str, Any]:
+def _normalize_workpaper_research_plan(plan: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(plan, dict):
         return {
             "need_autonomous_research": False,
@@ -295,7 +309,7 @@ def _normalize_workpaper_research_plan(plan: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def _normalize_target_fields(fields: List[str]) -> List[str]:
+def _normalize_target_fields(fields: list[str]) -> list[str]:
     normalized = []
     seen = set()
     for field in fields or []:
@@ -314,7 +328,7 @@ def _normalize_workpaper_rounds(value: Any) -> int:
     return max(0, min(MAX_WORKPAPER_RESEARCH_ROUNDS, rounds))
 
 
-def _build_workpaper_research_queries(company: str, plan: Dict[str, Any], attempt_index: int) -> List[str]:
+def _build_workpaper_research_queries(company: str, plan: dict[str, Any], attempt_index: int) -> list[str]:
     guardrail_queries = [
         f"{company} 年报 风险因素 财务附注 披露",
         f"{company} annual report filing footnote disclosure",
@@ -335,7 +349,7 @@ def _build_workpaper_research_queries(company: str, plan: Dict[str, Any], attemp
     return deduped[:6]
 
 
-def sanitize_company_scope_fields(workpaper: Dict[str, Any], company_name: str, llm) -> Dict[str, Any]:
+def sanitize_company_scope_fields(workpaper: dict[str, Any], company_name: str, llm) -> dict[str, Any]:
     if not company_name:
         return workpaper
     if getattr(llm, "_responses", None) is not None:
@@ -370,7 +384,7 @@ def sanitize_company_scope_fields(workpaper: Dict[str, Any], company_name: str, 
     return workpaper
 
 
-def filter_external_results_by_company(results: List[Dict[str, Any]], company_name: str) -> List[Dict[str, Any]]:
+def filter_external_results_by_company(results: list[dict[str, Any]], company_name: str) -> list[dict[str, Any]]:
     tokens = _company_tokens(company_name)
     if not tokens:
         return results
@@ -388,7 +402,7 @@ def filter_external_results_by_company(results: List[Dict[str, Any]], company_na
     return filtered or results
 
 
-def _company_tokens(company_name: str) -> List[str]:
+def _company_tokens(company_name: str) -> list[str]:
     if not company_name or company_name.strip() in {"目标公司", "公司"}:
         return []
     base = re.sub(r"[\W_]+", " ", company_name).strip().lower()
@@ -398,13 +412,13 @@ def _company_tokens(company_name: str) -> List[str]:
     return list(dict.fromkeys(tokens))
 
 
-def apply_company_profile_hint(workpaper: Dict[str, Any], company_name: str) -> Dict[str, Any]:
+def apply_company_profile_hint(workpaper: dict[str, Any], company_name: str) -> dict[str, Any]:
     if company_name and _is_missing_value(workpaper.get("company_profile")):
         workpaper["company_profile"] = company_name
     return workpaper
 
 
-def build_context_pack(text: str, llm, company_name: str = "") -> Dict[str, Any]:
+def build_context_pack(text: str, llm, company_name: str = "") -> dict[str, Any]:
     if getattr(llm, "_responses", None) is not None:
         return {
             "company_name": company_name or "",
@@ -419,11 +433,12 @@ def build_context_pack(text: str, llm, company_name: str = "") -> Dict[str, Any]
             "audit_controls": "",
         }
     system_prompt = "你是上下文工程专家，负责从年报中提取公司背景上下文包。"
+    fitted_text = _fit_text_for_prompt(text, MAX_CONTEXT_PACK_INPUT_CHARS)
     user_prompt = (
         "请从以下文本中提取公司背景与业务关键信息，填充context_pack。"
         "优先使用年报披露信息，保持简洁、可审计。\n\n"
         f"公司名提示：{company_name}\n\n"
-        f"文本内容：\n{text}\n"
+        f"文本内容：\n{fitted_text}\n"
     )
     pack = llm.generate_json(system_prompt, user_prompt, CONTEXT_PACK_SCHEMA)
     if company_name and _is_missing_value(pack.get("company_name")):
@@ -431,7 +446,7 @@ def build_context_pack(text: str, llm, company_name: str = "") -> Dict[str, Any]
     return pack
 
 
-def build_context_capsule(pack: Dict[str, Any]) -> str:
+def build_context_capsule(pack: dict[str, Any]) -> str:
     return (
         "背景要点：\n"
         f"- 公司：{pack.get('company_name','')}\n"
@@ -452,3 +467,20 @@ def _is_missing_value(value: Any) -> bool:
         return True
     text = str(value).strip()
     return text == ""
+
+
+def _fit_text_for_prompt(text: str, max_chars: int) -> str:
+    if max_chars <= 0:
+        return ""
+    if len(text) <= max_chars:
+        return text
+
+    # Preserve both head and tail sections to keep company profile and latest-period notes.
+    split = max_chars // 2
+    head = text[:split]
+    tail = text[-(max_chars - split) :]
+    return (
+        head
+        + "\n\n[... 中间内容已截断，保留首尾关键信息以控制上下文长度 ...]\n\n"
+        + tail
+    )

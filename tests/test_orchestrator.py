@@ -1,5 +1,6 @@
 import json
 import time
+
 from src.orchestrator import run_pipeline
 from tests.helpers.fake_llm import FakeLLM
 
@@ -141,7 +142,7 @@ def test_run_pipeline_writes_outputs(tmp_path):
     reports = list(agent_dir.glob("*.json"))
     assert len(reports) >= 8
 
-    with open(tmp_path / "final_report.json", "r", encoding="utf-8") as f:
+    with open(tmp_path / "final_report.json", encoding="utf-8") as f:
         data = json.load(f)
     assert data["overall_risk_level"] == "medium"
     log_path = tmp_path / "run.log"
@@ -235,8 +236,8 @@ def test_run_pipeline_prefers_stronger_financial_text(monkeypatch, tmp_path):
 
 
 def test_run_pipeline_parallelizes_agent_stage(monkeypatch, tmp_path):
-    from src import orchestrator
     from src import agents as agents_module
+    from src import orchestrator
 
     def fake_extract_financials_with_fallback(*_args, **_kwargs):
         return {

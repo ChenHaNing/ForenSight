@@ -1,8 +1,8 @@
 from src.pdf_loader import (
-    extract_financial_statement_text,
     extract_company_name,
-    extract_revenue_context,
     extract_context_text,
+    extract_financial_statement_text,
+    extract_revenue_context,
 )
 
 
