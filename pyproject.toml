@@ -41,7 +41,7 @@ dev = [
 ]
 
 [project.urls]
-Repository = "https://github.com/ChenHaNing/FFMAS"
+Repository = "https://github.com/ChenHaNing/ForenSight"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
